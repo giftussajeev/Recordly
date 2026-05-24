@@ -1,68 +1,57 @@
 package com.recordly.app.data
 
 import android.content.Context
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.*
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "recordly_settings")
+private val Context.dataStore by preferencesDataStore(name = "settings")
 
 class PreferencesRepository(private val context: Context) {
-    
-    private val dataStore = context.dataStore
-    
-    companion object {
-        val RESOLUTION = stringPreferencesKey("resolution")
-        val FPS = intPreferencesKey("fps")
-        val QUALITY = stringPreferencesKey("quality")
-        val BITRATE = stringPreferencesKey("bitrate")
-        val AUDIO_SOURCE = stringPreferencesKey("audio_source")
-        val COUNTDOWN = intPreferencesKey("countdown")
-        val SHOW_TAPS = booleanPreferencesKey("show_taps")
-        val THEME = stringPreferencesKey("theme")
-        val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
-        val FLOATING_OVERLAY = booleanPreferencesKey("floating_overlay")
-        val OVERLAY_STYLE = stringPreferencesKey("overlay_style")
+
+    private val RESOLUTION = stringPreferencesKey("resolution")
+    private val FPS = intPreferencesKey("fps")
+    private val QUALITY = stringPreferencesKey("quality")
+    private val BITRATE = stringPreferencesKey("bitrate")
+    private val COUNTDOWN = intPreferencesKey("countdown")
+    private val AUDIO_SOURCE = stringPreferencesKey("audio_source")
+    private val FLOATING_CONTROLS = booleanPreferencesKey("floating_controls")
+
+    val userPreferencesFlow: Flow<UserPreferences> = context.dataStore.data.map { prefs ->
+        UserPreferences(
+            resolution = prefs[RESOLUTION] ?: "1080p",
+            fps = prefs[FPS] ?: 60,
+            quality = prefs[QUALITY] ?: "High",
+            bitrate = prefs[BITRATE] ?: "Auto",
+            countdown = prefs[COUNTDOWN] ?: 3,
+            audioSource = prefs[AUDIO_SOURCE] ?: "No audio",
+            floatingControls = prefs[FLOATING_CONTROLS] ?: true
+        )
     }
 
-    val userPreferencesFlow: Flow<UserPreferences> = dataStore.data
-        .map { preferences ->
-            UserPreferences(
-                resolution = preferences[RESOLUTION] ?: "1080p",
-                fps = preferences[FPS] ?: 60,
-                quality = preferences[QUALITY] ?: "High",
-                bitrate = preferences[BITRATE] ?: "Auto",
-                audioSource = preferences[AUDIO_SOURCE] ?: "Internal Audio",
-                countdown = preferences[COUNTDOWN] ?: 3,
-                showTaps = preferences[SHOW_TAPS] ?: false,
-                theme = preferences[THEME] ?: "System",
-                dynamicColor = preferences[DYNAMIC_COLOR] ?: true,
-                floatingOverlayEnabled = preferences[FLOATING_OVERLAY] ?: true,
-                overlayStyle = preferences[OVERLAY_STYLE] ?: "Bubble"
-            )
-        }
-
-    suspend fun updateFps(fps: Int) {
-        dataStore.edit { preferences ->
-            preferences[FPS] = fps
-        }
+    suspend fun updateResolution(value: String) {
+        context.dataStore.edit { it[RESOLUTION] = value }
     }
-    
-    // Add other update functions as needed
+    suspend fun updateFps(value: Int) {
+        context.dataStore.edit { it[FPS] = value }
+    }
+    suspend fun updateQuality(value: String) {
+        context.dataStore.edit { it[QUALITY] = value }
+    }
+    suspend fun updateBitrate(value: String) {
+        context.dataStore.edit { it[BITRATE] = value }
+    }
+    suspend fun updateCountdown(value: Int) {
+        context.dataStore.edit { it[COUNTDOWN] = value }
+    }
+    suspend fun updateAudioSource(value: String) {
+        context.dataStore.edit { it[AUDIO_SOURCE] = value }
+    }
+    suspend fun updateFloatingControls(value: Boolean) {
+        context.dataStore.edit { it[FLOATING_CONTROLS] = value }
+    }
 }
-
-data class UserPreferences(
-    val resolution: String,
-    val fps: Int,
-    val quality: String,
-    val bitrate: String,
-    val audioSource: String,
-    val countdown: Int,
-    val showTaps: Boolean,
-    val theme: String,
-    val dynamicColor: Boolean,
-    val floatingOverlayEnabled: Boolean,
-    val overlayStyle: String
-)

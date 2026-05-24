@@ -9,18 +9,19 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class SettingsViewModel(private val preferencesRepository: PreferencesRepository) : ViewModel() {
-
-    val uiState: StateFlow<UserPreferences?> = preferencesRepository.userPreferencesFlow
+class SettingsViewModel(private val repository: PreferencesRepository) : ViewModel() {
+    val uiState: StateFlow<UserPreferences?> = repository.userPreferencesFlow
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = null
         )
 
-    fun updateFps(fps: Int) {
-        viewModelScope.launch {
-            preferencesRepository.updateFps(fps)
-        }
-    }
+    fun updateResolution(value: String) = viewModelScope.launch { repository.updateResolution(value) }
+    fun updateFps(value: Int) = viewModelScope.launch { repository.updateFps(value) }
+    fun updateQuality(value: String) = viewModelScope.launch { repository.updateQuality(value) }
+    fun updateBitrate(value: String) = viewModelScope.launch { repository.updateBitrate(value) }
+    fun updateCountdown(value: Int) = viewModelScope.launch { repository.updateCountdown(value) }
+    fun updateAudioSource(value: String) = viewModelScope.launch { repository.updateAudioSource(value) }
+    fun updateFloatingControls(value: Boolean) = viewModelScope.launch { repository.updateFloatingControls(value) }
 }

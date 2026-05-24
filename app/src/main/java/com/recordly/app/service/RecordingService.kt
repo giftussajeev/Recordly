@@ -22,6 +22,14 @@ import android.view.WindowManager
 import androidx.core.app.NotificationCompat
 import com.recordly.app.MainActivity
 import com.recordly.app.R
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -34,24 +42,38 @@ class RecordingService : Service() {
     private var mediaRecorder: MediaRecorder? = null
     private var overlayManager: FloatingOverlayManager? = null
 
-    private var isRecording = false
+    private val serviceScope = CoroutineScope(Dispatchers.Main + Job())
+    private var countdownJob: Job? = null
 
     companion object {
+        private val _recordingState = MutableStateFlow<RecordingState>(RecordingState.Idle)
+        val recordingState: StateFlow<RecordingState> = _recordingState.asStateFlow()
+
         const val ACTION_START = "ACTION_START_RECORDING"
         const val ACTION_STOP = "ACTION_STOP_RECORDING"
+        const val ACTION_PAUSE = "ACTION_PAUSE_RECORDING"
+        const val ACTION_RESUME = "ACTION_RESUME_RECORDING"
         const val ACTION_TOGGLE_MIC = "ACTION_TOGGLE_MIC"
+        
         const val EXTRA_RESULT_CODE = "EXTRA_RESULT_CODE"
         const val EXTRA_RESULT_DATA = "EXTRA_RESULT_DATA"
         
-        // Settings Extras
         const val EXTRA_RESOLUTION = "EXTRA_RESOLUTION"
         const val EXTRA_FPS = "EXTRA_FPS"
         const val EXTRA_AUDIO_SOURCE = "EXTRA_AUDIO_SOURCE"
         const val EXTRA_BITRATE = "EXTRA_BITRATE"
+        const val EXTRA_COUNTDOWN = "EXTRA_COUNTDOWN"
 
         private const val CHANNEL_ID = "recordly_recording_channel"
         private const val NOTIFICATION_ID = 112
         private const val TAG = "RecordingService"
+        
+        fun requestPermissionState() {
+            _recordingState.value = RecordingState.RequestingPermission
+        }
+        fun resetToIdle() {
+            _recordingState.value = RecordingState.Idle
+        }
     }
 
     override fun onCreate() {
@@ -60,7 +82,16 @@ class RecordingService : Service() {
         overlayManager = FloatingOverlayManager(this)
     }
 
+    override fun onBind(intent: Intent?): IBinder? = null
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val notification = buildNotification(isPaused = false)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
+        } else {
+            startForeground(NOTIFICATION_ID, notification)
+        }
+
         when (intent?.action) {
             ACTION_START -> {
                 val resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, 0)
@@ -70,21 +101,45 @@ class RecordingService : Service() {
                 val fps = intent.getIntExtra(EXTRA_FPS, 60)
                 val audioSource = intent.getStringExtra(EXTRA_AUDIO_SOURCE) ?: "No audio"
                 val bitrate = intent.getStringExtra(EXTRA_BITRATE) ?: "Auto"
+                val countdown = intent.getIntExtra(EXTRA_COUNTDOWN, 3)
 
                 if (resultCode != 0 && resultData != null) {
-                    startRecording(resultCode, resultData, resolution, fps, audioSource, bitrate)
+                    startCountdownAndRecord(resultCode, resultData, resolution, fps, audioSource, bitrate, countdown)
                 } else {
-                    stopSelf()
+                    stopRecordingSafely(isError = true, message = "Invalid permission data")
                 }
             }
-            ACTION_STOP -> stopRecording()
+            ACTION_STOP -> {
+                stopRecordingSafely(isError = false, message = null)
+            }
+            ACTION_PAUSE -> {
+                pauseRecording()
+            }
+            ACTION_RESUME -> {
+                resumeRecording()
+            }
             ACTION_TOGGLE_MIC -> toggleMic()
         }
         return START_NOT_STICKY
     }
-
-    private fun toggleMic() {
-        // Advanced logic to pause/resume audio recording
+    
+    private fun startCountdownAndRecord(
+        resultCode: Int, 
+        resultData: Intent, 
+        resolution: String, 
+        fps: Int, 
+        audioSource: String,
+        bitrateConfig: String,
+        countdown: Int
+    ) {
+        countdownJob?.cancel()
+        countdownJob = serviceScope.launch {
+            for (i in countdown downTo 1) {
+                _recordingState.value = RecordingState.Countdown(i)
+                delay(1000)
+            }
+            startRecording(resultCode, resultData, resolution, fps, audioSource, bitrateConfig)
+        }
     }
 
     private fun startRecording(
@@ -95,18 +150,16 @@ class RecordingService : Service() {
         audioSource: String,
         bitrateConfig: String
     ) {
-        if (isRecording) return
-
-        val notification = buildNotification()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
-        } else {
-            startForeground(NOTIFICATION_ID, notification)
-        }
+        if (_recordingState.value is RecordingState.Recording) return
 
         try {
             val projectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
             mediaProjection = projectionManager.getMediaProjection(resultCode, resultData)
+
+            if (mediaProjection == null) {
+                stopRecordingSafely(true, "Failed to acquire MediaProjection.")
+                return
+            }
 
             setupMediaRecorder(resolution, fps, audioSource, bitrateConfig)
             
@@ -127,19 +180,24 @@ class RecordingService : Service() {
             )
 
             mediaRecorder?.start()
-            isRecording = true
+            _recordingState.value = RecordingState.Recording
             
-            // Show Overlay
             overlayManager?.showOverlay(
                 isRecording = true,
-                onRecordToggle = { stopRecording() },
+                onRecordToggle = { 
+                    if (_recordingState.value is RecordingState.Recording) {
+                        stopRecordingSafely(false, null)
+                    } else {
+                        // handled by UI flow usually
+                    }
+                },
                 onMicToggle = { toggleMic() }
             )
 
             Log.d(TAG, "Recording started successfully")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start recording: ${e.message}", e)
-            stopRecording()
+            stopRecordingSafely(true, e.localizedMessage ?: "Unknown error starting recording")
         }
     }
 
@@ -151,7 +209,6 @@ class RecordingService : Service() {
             MediaRecorder()
         }
 
-        // Setup Audio Source
         when (audioSource) {
             "Phone microphone", "External microphone" -> {
                 mediaRecorder?.setAudioSource(MediaRecorder.AudioSource.MIC)
@@ -187,15 +244,14 @@ class RecordingService : Service() {
             "12 Mbps" -> 12000000
             "20 Mbps" -> 20000000
             "35 Mbps" -> 35000000
-            else -> width * height * fps / 10 // Auto estimation
+            else -> width * height * fps / 10
         }
         mediaRecorder?.setVideoEncodingBitRate(bitrate)
         
         val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val displayFps = windowManager.defaultDisplay.refreshRate
         val targetFps = if (fps > displayFps.toInt()) {
-            Log.w(TAG, "Requested FPS ($fps) exceeds Display Hz ($displayFps).")
-            fps
+            displayFps.toInt()
         } else {
             fps
         }
@@ -209,6 +265,38 @@ class RecordingService : Service() {
         
         mediaRecorder?.setOutputFile(outputFile.absolutePath)
         mediaRecorder?.prepare()
+    }
+    
+    private fun pauseRecording() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && _recordingState.value is RecordingState.Recording) {
+            try {
+                mediaRecorder?.pause()
+                _recordingState.value = RecordingState.Paused
+                
+                val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                notificationManager.notify(NOTIFICATION_ID, buildNotification(isPaused = true))
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to pause", e)
+            }
+        }
+    }
+    
+    private fun resumeRecording() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && _recordingState.value is RecordingState.Paused) {
+            try {
+                mediaRecorder?.resume()
+                _recordingState.value = RecordingState.Recording
+                
+                val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                notificationManager.notify(NOTIFICATION_ID, buildNotification(isPaused = false))
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to resume", e)
+            }
+        }
+    }
+    
+    private fun toggleMic() {
+        // Future mic mute implementation
     }
 
     private fun getResolutionWidth(resolution: String, metrics: DisplayMetrics): Int {
@@ -237,22 +325,22 @@ class RecordingService : Service() {
         return (resWidth * aspectRatio).toInt()
     }
 
-    private fun stopRecording() {
+    private fun stopRecordingSafely(isError: Boolean, message: String?) {
+        _recordingState.value = RecordingState.Stopping
         overlayManager?.hideOverlay()
         
-        if (!isRecording) {
-            stopForeground(true)
-            stopSelf()
-            return
-        }
-
         try {
             mediaRecorder?.stop()
         } catch (e: Exception) {
             Log.e(TAG, "Error stopping media recorder", e)
         }
-        mediaRecorder?.reset()
-        mediaRecorder?.release()
+        
+        try {
+            mediaRecorder?.reset()
+            mediaRecorder?.release()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error releasing media recorder", e)
+        }
         mediaRecorder = null
 
         virtualDisplay?.release()
@@ -261,31 +349,21 @@ class RecordingService : Service() {
         mediaProjection?.stop()
         mediaProjection = null
 
-        isRecording = false
-        stopForeground(true)
-        stopSelf()
-    }
-
-    override fun onBind(intent: Intent?): IBinder? = null
-
-    private fun buildNotification(): Notification {
-        val stopIntent = Intent(this, RecordingService::class.java).apply {
-            action = ACTION_STOP
+        if (isError && message != null) {
+            _recordingState.value = RecordingState.Error(message)
+        } else {
+            _recordingState.value = RecordingState.Saved
         }
-        val stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_IMMUTABLE)
+        
+        serviceScope.launch {
+            delay(1500)
+            if (_recordingState.value is RecordingState.Saved || _recordingState.value is RecordingState.Error) {
+                _recordingState.value = RecordingState.Idle
+            }
+        }
 
-        val mainIntent = Intent(this, MainActivity::class.java)
-        val mainPendingIntent = PendingIntent.getActivity(this, 0, mainIntent, PendingIntent.FLAG_IMMUTABLE)
-
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(getString(R.string.app_name))
-            .setContentText("Recording in progress...")
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentIntent(mainPendingIntent)
-            .addAction(android.R.drawable.ic_media_pause, "Stop", stopPendingIntent)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setOngoing(true)
-            .build()
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
     }
 
     private fun createNotificationChannel() {
@@ -293,10 +371,51 @@ class RecordingService : Service() {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Screen Recording",
-                NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_HIGH
             )
-            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(channel)
         }
+    }
+
+    private fun buildNotification(isPaused: Boolean): Notification {
+        val stopIntent = Intent(this, RecordingService::class.java).apply {
+            action = ACTION_STOP
+        }
+        val stopPendingIntent = PendingIntent.getService(
+            this, 0, stopIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        
+        val pauseResumeAction = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            if (isPaused) {
+                val resumeIntent = Intent(this, RecordingService::class.java).apply { action = ACTION_RESUME }
+                val resumePending = PendingIntent.getService(this, 1, resumeIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+                NotificationCompat.Action.Builder(android.R.drawable.ic_media_play, "Resume", resumePending).build()
+            } else {
+                val pauseIntent = Intent(this, RecordingService::class.java).apply { action = ACTION_PAUSE }
+                val pausePending = PendingIntent.getService(this, 2, pauseIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+                NotificationCompat.Action.Builder(android.R.drawable.ic_media_pause, "Pause", pausePending).build()
+            }
+        } else null
+
+        val openAppIntent = Intent(this, MainActivity::class.java)
+        val openAppPendingIntent = PendingIntent.getActivity(this, 3, openAppIntent, PendingIntent.FLAG_IMMUTABLE)
+
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle(if (isPaused) "Recording Paused" else "Recording Screen")
+            .setContentText("Tap to open app")
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentIntent(openAppPendingIntent)
+            .addAction(NotificationCompat.Action.Builder(
+                android.R.drawable.ic_media_pause, // Generic icon
+                "Stop", 
+                stopPendingIntent
+            ).build())
+            .setOngoing(true)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            
+        pauseResumeAction?.let { builder.addAction(it) }
+
+        return builder.build()
     }
 }
