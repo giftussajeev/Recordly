@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Recordly - Recordings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400;8..144,500;8..144,700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error-container": "#ffdad6",
+                        "on-primary-container": "#c8d8ff",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed-variant": "#523f5f",
+                        "on-tertiary-container": "#e8cef5",
+                        "inverse-surface": "#313030",
+                        "on-secondary": "#ffffff",
+                        "surface-container-highest": "#e6e1e1",
+                        "surface": "#fdf8f8",
+                        "surface-container-low": "#f7f3f2",
+                        "inverse-on-surface": "#f4f0ef",
+                        "on-secondary-fixed-variant": "#3c4858",
+                        "surface-dim": "#ddd9d9",
+                        "outline-variant": "#c2c6d5",
+                        "primary": "#004394",
+                        "on-primary": "#ffffff",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-background": "#1c1b1b",
+                        "background": "#fdf8f8",
+                        "on-tertiary-fixed": "#251431",
+                        "inverse-primary": "#adc6ff",
+                        "on-surface-variant": "#424753",
+                        "on-secondary-container": "#596576",
+                        "tertiary-container": "#6a5677",
+                        "primary-fixed": "#d8e2ff",
+                        "on-secondary-fixed": "#101c2b",
+                        "surface-tint": "#015ac1",
+                        "tertiary-fixed": "#f3daff",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed-variant": "#004494",
+                        "surface-container-high": "#ebe7e7",
+                        "on-surface": "#1c1b1b",
+                        "outline": "#727784",
+                        "on-error": "#ffffff",
+                        "surface-variant": "#e6e1e1",
+                        "secondary": "#535f70",
+                        "on-primary-fixed": "#001a41",
+                        "secondary-fixed": "#d7e3f8",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed-dim": "#d6bee4",
+                        "tertiary": "#513f5e",
+                        "primary-container": "#005ac1",
+                        "surface-container": "#f1edec",
+                        "secondary-container": "#d7e3f8",
+                        "surface-bright": "#fdf8f8",
+                        "secondary-fixed-dim": "#bbc7db"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-padding": "24px",
+                        "margin-tablet": "24px",
+                        "margin-mobile": "16px",
+                        "gutter": "16px",
+                        "baseline": "4px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Roboto Flex"],
+                        "label-lg": ["Roboto Flex"],
+                        "body-md": ["Roboto Flex"],
+                        "title-md": ["Roboto Flex"],
+                        "headline-lg": ["Roboto Flex"],
+                        "display-lg": ["Roboto Flex"],
+                        "label-md": ["Roboto Flex"],
+                        "title-lg": ["Roboto Flex"],
+                        "headline-lg-mobile": ["Roboto Flex"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "0.5px", "fontWeight": "400" }],
+                        "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "500" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.25px", "fontWeight": "400" }],
+                        "title-md": ["16px", { "lineHeight": "24px", "letterSpacing": "0.15px", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "0px", "fontWeight": "400" }],
+                        "display-lg": ["57px", { "lineHeight": "64px", "letterSpacing": "-0.25px", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "500" }],
+                        "title-lg": ["22px", { "lineHeight": "28px", "letterSpacing": "0px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "0px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+        .pt-safe { padding-top: env(safe-area-inset-top); }
+        body { -webkit-tap-highlight-color: transparent; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-surface dark:bg-[#111318] text-on-surface dark:text-[#E2E2E9] antialiased min-h-screen flex flex-col pt-safe pb-safe selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="bg-surface/80 dark:bg-[#111318]/80 backdrop-blur-xl fixed top-0 w-full z-50 pt-safe transition-all duration-300" id="topAppBar">
+<div class="flex items-center justify-between px-margin-mobile w-full h-16">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary dark:text-inverse-primary text-2xl">videocam</span>
+<h1 class="font-title-lg text-title-lg font-bold text-primary dark:text-inverse-primary">Recordly</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant dark:text-[#C4C6D0] hover:bg-surface-container-high dark:hover:bg-[#282A2F] transition-colors active:scale-95 duration-100">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col px-margin-mobile pt-20 pb-[96px] gap-6">
+<!-- Search Bar -->
+<div class="relative w-full group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-on-surface-variant dark:text-[#C4C6D0] group-focus-within:text-primary dark:group-focus-within:text-inverse-primary transition-colors">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="block w-full pl-12 pr-4 py-3.5 bg-surface-container-low dark:bg-[#191A20] border-none rounded-[28px] font-body-lg text-body-lg text-on-surface dark:text-[#E2E2E9] placeholder-on-surface-variant dark:placeholder-[#C4C6D0] focus:ring-2 focus:ring-primary dark:focus:ring-inverse-primary focus:bg-surface-container dark:focus:bg-[#1D1F24] transition-all shadow-sm" placeholder="Search recordings..." type="text"/>
+</div>
+<!-- Controls Row -->
+<div class="flex items-center justify-between mt-2">
+<!-- Sort Dropdown Trigger -->
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-surface-container-high dark:hover:bg-[#282A2F] transition-colors text-on-surface-variant dark:text-[#C4C6D0]">
+<span class="material-symbols-outlined text-[20px]">sort</span>
+<span class="font-label-lg text-label-lg">Date added</span>
+<span class="material-symbols-outlined text-[20px]">arrow_drop_down</span>
+</button>
+<!-- View Toggle -->
+<div class="flex bg-surface-container-low dark:bg-[#191A20] rounded-lg p-1 border border-outline-variant/30 dark:border-[#44474E]/30">
+<button aria-label="List View" class="w-9 h-9 flex items-center justify-center rounded-md bg-secondary-container dark:bg-secondary-container text-on-secondary-container dark:text-on-secondary-container shadow-sm transition-colors">
+<span class="material-symbols-outlined text-[20px]">view_agenda</span>
+</button>
+<button aria-label="Grid View" class="w-9 h-9 flex items-center justify-center rounded-md text-on-surface-variant dark:text-[#C4C6D0] hover:text-on-surface dark:hover:text-[#E2E2E9] hover:bg-surface-container-highest dark:hover:bg-[#33353A] transition-colors">
+<span class="material-symbols-outlined text-[20px]">grid_view</span>
+</button>
+</div>
+</div>
+<!-- Recordings List -->
+<div class="flex flex-col gap-4">
+<!-- Recording Card 1 -->
+<div class="flex items-center gap-4 p-3 bg-surface-container-low dark:bg-[#191A20] rounded-[24px] shadow-[0_1px_3px_rgba(0,0,0,0.08)] active:scale-[0.98] transition-transform cursor-pointer group hover:bg-surface-container dark:hover:bg-[#1D1F24]">
+<!-- Thumbnail -->
+<div class="relative w-28 h-20 rounded-xl overflow-hidden shrink-0 bg-surface-container-highest dark:bg-[#33353A]">
+<img alt="Video Thumbnail" class="w-full h-full object-cover" data-alt="A dynamic action-packed gameplay screenshot of a modern first-person shooter video game. The scene features high contrast lighting, vibrant neon accents in a futuristic urban environment. The perspective is first-person showing a futuristic weapon. The overall aesthetic is dark, high-tech, and intense." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2s40e6lfXfnPKOfXisDBeGcVQaauvr7B0mbkIqpNZPVLHBjgVFJxd1mLq8_oX0i0nI5J02cjTMoCog5wN4tY1BfdhBnJrxfUEtnOdIAbMrHhoEiuvoYLvGAc11wMoPueFQpUph9Ua6mm7gBM4Zh_M2KUuNBmcC5pIrxRVpN_-2wj_sZ4LTIvXnkWK-8y2Rm8eH1NO-WRjTiRE16Eo-AeKKTOvsjQJsX5v0Glnzlx3FyvEaw3u1jD1iNeYWrNK4_3TXW7op8HAoYsG"/>
+<div class="absolute bottom-1.5 right-1.5 bg-black/70 backdrop-blur-md px-1.5 py-0.5 rounded text-white font-label-md text-label-md">05:22</div>
+<div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</div>
+</div>
+<!-- Details -->
+<div class="flex-1 min-w-0 py-1 flex flex-col justify-between h-full">
+<div>
+<h3 class="font-title-md text-title-md text-on-surface dark:text-[#E2E2E9] truncate pr-2">Gameplay_Recording_001.mp4</h3>
+<p class="font-body-md text-body-md text-on-surface-variant dark:text-[#C4C6D0] truncate mt-0.5">Oct 24 • 05:22 • 1.2 GB</p>
+</div>
+<div class="flex gap-2 mt-2">
+<span class="px-2 py-0.5 bg-secondary-container/50 dark:bg-secondary-container/50 text-on-secondary-container dark:text-on-secondary-container rounded-md font-label-md text-label-md">1080p</span>
+<span class="px-2 py-0.5 bg-surface-variant dark:bg-[#44474E] text-on-surface-variant dark:text-[#C4C6D0] rounded-md font-label-md text-label-md">60 FPS</span>
+</div>
+</div>
+<!-- Action Menu -->
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant dark:text-[#C4C6D0] hover:bg-surface-container-high dark:hover:bg-[#282A2F] transition-colors shrink-0 self-start mt-1">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<!-- Recording Card 2 -->
+<div class="flex items-center gap-4 p-3 bg-surface-container-low dark:bg-[#191A20] rounded-[24px] shadow-[0_1px_3px_rgba(0,0,0,0.08)] active:scale-[0.98] transition-transform cursor-pointer group hover:bg-surface-container dark:hover:bg-[#1D1F24]">
+<div class="relative w-28 h-20 rounded-xl overflow-hidden shrink-0 bg-surface-container-highest dark:bg-[#33353A]">
+<img alt="Video Thumbnail" class="w-full h-full object-cover" data-alt="A clean, modern user interface of a mobile application displayed on a smartphone screen. The UI features a soft color palette with rounded corners and neat typography. The screen shows a dashboard with subtle charts and minimalist icons. The lighting is bright and airy, typical of modern light-mode app design." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBg_zuntDQV5yM77JOFMD0yk4gmFsSwfN5K3lrr4iz_mOOT28F4NzkUyNAhInmhqDsAUMISEFXfw2LFDkOluOp0DCAZZHD4BO7pEnBzF3wrZ0YgCi7PYG-VvSwXuexLXGmk0e0hPS-qOX-25nntAXAhK0KSCU_K4mn3URdUAhIatgLqVC1-pl0a_NeLIo4tAvg7NNR0wIENdI07bF3SSWiQYeEy7OznoF5DmacTksZgC8QBYCXoJBfD6jbEoRF6gct4vIxS2PERo2-g"/>
+<div class="absolute bottom-1.5 right-1.5 bg-black/70 backdrop-blur-md px-1.5 py-0.5 rounded text-white font-label-md text-label-md">12:45</div>
+</div>
+<div class="flex-1 min-w-0 py-1 flex flex-col justify-between h-full">
+<div>
+<h3 class="font-title-md text-title-md text-on-surface dark:text-[#E2E2E9] truncate pr-2">App_Walkthrough_Draft.mp4</h3>
+<p class="font-body-md text-body-md text-on-surface-variant dark:text-[#C4C6D0] truncate mt-0.5">Oct 23 • 12:45 • 850 MB</p>
+</div>
+<div class="flex gap-2 mt-2">
+<span class="px-2 py-0.5 bg-secondary-container/50 dark:bg-secondary-container/50 text-on-secondary-container dark:text-on-secondary-container rounded-md font-label-md text-label-md">720p</span>
+<span class="px-2 py-0.5 bg-surface-variant dark:bg-[#44474E] text-on-surface-variant dark:text-[#C4C6D0] rounded-md font-label-md text-label-md">30 FPS</span>
+</div>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant dark:text-[#C4C6D0] hover:bg-surface-container-high dark:hover:bg-[#282A2F] transition-colors shrink-0 self-start mt-1">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<!-- Recording Card 3 -->
+<div class="flex items-center gap-4 p-3 bg-surface-container-low dark:bg-[#191A20] rounded-[24px] shadow-[0_1px_3px_rgba(0,0,0,0.08)] active:scale-[0.98] transition-transform cursor-pointer group hover:bg-surface-container dark:hover:bg-[#1D1F24]">
+<div class="relative w-28 h-20 rounded-xl overflow-hidden shrink-0 bg-surface-container-highest dark:bg-[#33353A] flex items-center justify-center">
+<span class="material-symbols-outlined text-outline dark:text-[#8E9099] text-3xl">mic</span>
+<div class="absolute bottom-1.5 right-1.5 bg-black/70 backdrop-blur-md px-1.5 py-0.5 rounded text-white font-label-md text-label-md">45:10</div>
+</div>
+<div class="flex-1 min-w-0 py-1 flex flex-col justify-between h-full">
+<div>
+<h3 class="font-title-md text-title-md text-on-surface dark:text-[#E2E2E9] truncate pr-2">Team_Meeting_Audio.m4a</h3>
+<p class="font-body-md text-body-md text-on-surface-variant dark:text-[#C4C6D0] truncate mt-0.5">Oct 20 • 45:10 • 45 MB</p>
+</div>
+<div class="flex gap-2 mt-2">
+<span class="px-2 py-0.5 bg-surface-variant dark:bg-[#44474E] text-on-surface-variant dark:text-[#C4C6D0] rounded-md font-label-md text-label-md">Audio Only</span>
+</div>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant dark:text-[#C4C6D0] hover:bg-surface-container-high dark:hover:bg-[#282A2F] transition-colors shrink-0 self-start mt-1">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full h-20 flex justify-around items-center px-4 pb-safe bg-surface-container dark:bg-[#1D1F24] z-50 rounded-t-[28px] shadow-sm dark:shadow-none">
+<!-- Record Tab (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-[#C4C6D0] px-5 py-1 hover:bg-surface-container-highest dark:hover:bg-[#33353A] transition-all" href="#">
+<span class="material-symbols-outlined mb-1">radio_button_checked</span>
+<span class="font-label-md text-label-md">Record</span>
+</a>
+<!-- Recordings Tab (Active) -->
+<a class="flex flex-col items-center justify-center bg-secondary-container dark:bg-secondary-container text-on-secondary-container dark:text-on-secondary-container rounded-full px-5 py-1 hover:bg-surface-container-highest dark:hover:bg-[#33353A] transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">video_library</span>
+<span class="font-label-md text-label-md">Recordings</span>
+</a>
+<!-- Settings Tab (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-[#C4C6D0] px-5 py-1 hover:bg-surface-container-highest dark:hover:bg-[#33353A] transition-all" href="#">
+<span class="material-symbols-outlined mb-1">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</nav>
+<script>
+        // Simple Top App Bar scroll effect
+        const topAppBar = document.getElementById('topAppBar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 10) {
+                topAppBar.classList.add('shadow-sm');
+            } else {
+                topAppBar.classList.remove('shadow-sm');
+            }
+        });
+    </script>
+</body></html>

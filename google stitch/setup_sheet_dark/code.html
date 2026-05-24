@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Recording Options - Recordly</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400;8..144,500;8..144,700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error-container": "#ffdad6",
+                    "on-primary-container": "#c8d8ff",
+                    "on-tertiary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary-fixed-variant": "#523f5f",
+                    "on-tertiary-container": "#e8cef5",
+                    "inverse-surface": "#313030",
+                    "on-secondary": "#ffffff",
+                    "surface-container-highest": "#e6e1e1",
+                    "surface": "#fdf8f8",
+                    "surface-container-low": "#f7f3f2",
+                    "inverse-on-surface": "#f4f0ef",
+                    "on-secondary-fixed-variant": "#3c4858",
+                    "surface-dim": "#ddd9d9",
+                    "outline-variant": "#c2c6d5",
+                    "primary": "#004394",
+                    "on-primary": "#ffffff",
+                    "primary-fixed-dim": "#adc6ff",
+                    "on-background": "#1c1b1b",
+                    "background": "#fdf8f8",
+                    "on-tertiary-fixed": "#251431",
+                    "inverse-primary": "#adc6ff",
+                    "on-surface-variant": "#424753",
+                    "on-secondary-container": "#596576",
+                    "tertiary-container": "#6a5677",
+                    "primary-fixed": "#d8e2ff",
+                    "on-secondary-fixed": "#101c2b",
+                    "surface-tint": "#015ac1",
+                    "tertiary-fixed": "#f3daff",
+                    "error": "#ba1a1a",
+                    "on-primary-fixed-variant": "#004494",
+                    "surface-container-high": "#ebe7e7",
+                    "on-surface": "#1c1b1b",
+                    "outline": "#727784",
+                    "on-error": "#ffffff",
+                    "surface-variant": "#e6e1e1",
+                    "secondary": "#535f70",
+                    "on-primary-fixed": "#001a41",
+                    "secondary-fixed": "#d7e3f8",
+                    "on-error-container": "#93000a",
+                    "tertiary-fixed-dim": "#d6bee4",
+                    "tertiary": "#513f5e",
+                    "primary-container": "#005ac1",
+                    "surface-container": "#f1edec",
+                    "secondary-container": "#d7e3f8",
+                    "surface-bright": "#fdf8f8",
+                    "secondary-fixed-dim": "#bbc7db"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-padding": "24px",
+                    "margin-tablet": "24px",
+                    "margin-mobile": "16px",
+                    "gutter": "16px",
+                    "baseline": "4px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Roboto Flex"],
+                    "label-lg": ["Roboto Flex"],
+                    "body-md": ["Roboto Flex"],
+                    "title-md": ["Roboto Flex"],
+                    "headline-lg": ["Roboto Flex"],
+                    "display-lg": ["Roboto Flex"],
+                    "label-md": ["Roboto Flex"],
+                    "title-lg": ["Roboto Flex"],
+                    "headline-lg-mobile": ["Roboto Flex"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0.5px", "fontWeight": "400"}],
+                    "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "500"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.25px", "fontWeight": "400"}],
+                    "title-md": ["16px", {"lineHeight": "24px", "letterSpacing": "0.15px", "fontWeight": "500"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "0px", "fontWeight": "400"}],
+                    "display-lg": ["57px", {"lineHeight": "64px", "letterSpacing": "-0.25px", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "500"}],
+                    "title-lg": ["22px", {"lineHeight": "28px", "letterSpacing": "0px", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "0px", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Roboto Flex', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .material-symbols-outlined.fill { font-variation-settings: 'FILL' 1; }
+        
+        /* Hide scrollbar for segmented control but keep functionality */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Modal animation */
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .modal-animate {
+            animation: slideUp 0.3s cubic-bezier(0.2, 0, 0, 1) forwards;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-[#141218] text-[#e6e0e9] h-screen w-screen overflow-hidden flex flex-col relative antialiased">
+<!-- Faux Background (Dashboard Dimmed) -->
+<div class="absolute inset-0 z-0 flex flex-col bg-[#141218] pointer-events-none">
+<!-- TopAppBar (Faux) -->
+<header class="flex items-center justify-between px-margin-mobile w-full h-16 bg-[#141218]/80 backdrop-blur-xl fixed top-0 z-10">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#d0bcff] font-title-lg text-title-lg" data-weight="fill">videocam</span>
+<span class="font-title-lg text-title-lg font-bold text-[#d0bcff]">Recordly</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-[#4f378b] flex items-center justify-center text-[#eaddff]">
+<span class="font-label-lg text-label-lg">JD</span>
+</div>
+</header>
+<!-- Dummy Content -->
+<main class="flex-1 pt-20 px-margin-mobile">
+<div class="h-32 bg-[#211f26] rounded-3xl mb-4 w-full"></div>
+<div class="h-32 bg-[#211f26] rounded-3xl mb-4 w-full"></div>
+<div class="h-32 bg-[#211f26] rounded-3xl mb-4 w-full"></div>
+</main>
+<!-- BottomNavBar (Faux) -->
+<nav class="fixed bottom-0 left-0 w-full h-20 flex justify-around items-center px-4 pb-safe bg-[#211f26] rounded-t-[28px] shadow-sm z-10">
+<div class="flex flex-col items-center justify-center bg-[#4a4458] text-[#e8def8] rounded-full px-5 py-1">
+<span class="material-symbols-outlined fill">radio_button_checked</span>
+<span class="font-label-md text-label-md mt-1">Record</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#cac4d0] px-5 py-1">
+<span class="material-symbols-outlined">video_library</span>
+<span class="font-label-md text-label-md mt-1">Recordings</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#cac4d0] px-5 py-1">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md mt-1">Settings</span>
+</div>
+</nav>
+</div>
+<!-- Dimming Scrim -->
+<div class="absolute inset-0 bg-black/60 z-40 transition-opacity duration-300"></div>
+<!-- M3 Modal Bottom Sheet -->
+<div class="absolute bottom-0 left-0 w-full bg-[#2b2930] rounded-t-[28px] z-50 flex flex-col modal-animate max-h-[795px] overflow-hidden shadow-[0_-4px_16px_rgba(0,0,0,0.3)]">
+<!-- Drag Handle -->
+<div class="w-full flex justify-center pt-4 pb-2">
+<div class="w-8 h-[4px] bg-[#938f99] rounded-full"></div>
+</div>
+<!-- Header -->
+<div class="px-margin-mobile pb-4 flex items-center justify-between">
+<h2 class="font-title-lg text-title-lg text-[#e6e0e9]">Recording Options</h2>
+<button aria-label="Close" class="w-12 h-12 flex items-center justify-center rounded-full hover:bg-[#49454f] text-[#cac4d0] transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto px-margin-mobile pb-24 hide-scrollbar">
+<!-- Resolution Group -->
+<section class="mb-6">
+<h3 class="font-label-lg text-label-lg text-[#cac4d0] mb-3">Resolution</h3>
+<div class="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+<button class="px-4 py-2 rounded-lg border border-[#938f99] bg-transparent text-[#e6e0e9] font-label-lg text-label-lg whitespace-nowrap hover:bg-[#49454f] transition-colors">720p</button>
+<button class="px-4 py-2 rounded-lg border border-[#d0bcff] bg-[#4f378b] text-[#eaddff] font-label-lg text-label-lg whitespace-nowrap transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">check</span>
+                        1080p
+                    </button>
+<button class="px-4 py-2 rounded-lg border border-[#938f99] bg-transparent text-[#e6e0e9] font-label-lg text-label-lg whitespace-nowrap hover:bg-[#49454f] transition-colors">1440p</button>
+<button class="px-4 py-2 rounded-lg border border-[#938f99] bg-transparent text-[#e6e0e9] font-label-lg text-label-lg whitespace-nowrap hover:bg-[#49454f] transition-colors">Native</button>
+</div>
+</section>
+<!-- Quality Group -->
+<section class="mb-6">
+<h3 class="font-label-lg text-label-lg text-[#cac4d0] mb-3">Quality</h3>
+<div class="flex bg-[#49454f] rounded-full p-1 overflow-x-auto hide-scrollbar">
+<button class="flex-1 min-w-[80px] py-2 rounded-full font-label-lg text-label-lg text-[#cac4d0] hover:text-[#e6e0e9] transition-colors">Low</button>
+<button class="flex-1 min-w-[80px] py-2 rounded-full font-label-lg text-label-lg text-[#cac4d0] hover:text-[#e6e0e9] transition-colors">Balanced</button>
+<button class="flex-1 min-w-[80px] py-2 rounded-full bg-[#d0bcff] text-[#381e72] font-label-lg text-label-lg shadow-sm transition-colors">High</button>
+<button class="flex-1 min-w-[100px] py-2 rounded-full font-label-lg text-label-lg text-[#cac4d0] hover:text-[#e6e0e9] transition-colors">Lossless-like</button>
+</div>
+</section>
+<!-- FPS Group -->
+<section class="mb-6">
+<h3 class="font-label-lg text-label-lg text-[#cac4d0] mb-3">Frame Rate (FPS)</h3>
+<div class="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+<button class="w-14 h-14 rounded-full border border-[#938f99] bg-transparent text-[#e6e0e9] font-label-lg text-label-lg flex items-center justify-center hover:bg-[#49454f] transition-colors">30</button>
+<button class="w-14 h-14 rounded-full border border-[#938f99] bg-transparent text-[#e6e0e9] font-label-lg text-label-lg flex items-center justify-center hover:bg-[#49454f] transition-colors">45</button>
+<button class="w-14 h-14 rounded-full border border-[#d0bcff] bg-[#4f378b] text-[#eaddff] font-label-lg text-label-lg flex items-center justify-center transition-colors">60</button>
+<button class="w-14 h-14 rounded-full border border-[#938f99] bg-transparent text-[#e6e0e9] font-label-lg text-label-lg flex items-center justify-center hover:bg-[#49454f] transition-colors">90</button>
+<button class="w-14 h-14 rounded-full border border-[#938f99] bg-transparent text-[#e6e0e9] font-label-lg text-label-lg flex items-center justify-center hover:bg-[#49454f] transition-colors">120</button>
+</div>
+</section>
+<!-- Audio Source List -->
+<section class="mb-2">
+<h3 class="font-label-lg text-label-lg text-[#cac4d0] mb-2">Audio Source</h3>
+<div class="flex flex-col bg-transparent rounded-2xl overflow-hidden border border-[#49454f]">
+<label class="flex items-center justify-between p-4 border-b border-[#49454f] cursor-pointer hover:bg-[#49454f]/50 transition-colors">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#cac4d0]">volume_off</span>
+<span class="font-body-lg text-body-lg text-[#e6e0e9]">No audio</span>
+</div>
+<input class="w-5 h-5 text-[#d0bcff] bg-transparent border-[#938f99] focus:ring-[#d0bcff] focus:ring-offset-[#2b2930]" name="audio_source" type="radio"/>
+</label>
+<label class="flex items-center justify-between p-4 border-b border-[#49454f] cursor-pointer hover:bg-[#49454f]/50 transition-colors">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#cac4d0]">speaker</span>
+<span class="font-body-lg text-body-lg text-[#e6e0e9]">Internal</span>
+</div>
+<input class="w-5 h-5 text-[#d0bcff] bg-transparent border-[#938f99] focus:ring-[#d0bcff] focus:ring-offset-[#2b2930]" name="audio_source" type="radio"/>
+</label>
+<label class="flex items-center justify-between p-4 border-b border-[#49454f] cursor-pointer bg-[#4f378b]/30 transition-colors">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#d0bcff]">mic</span>
+<span class="font-body-lg text-body-lg text-[#e6e0e9]">Microphone</span>
+</div>
+<input checked="" class="w-5 h-5 text-[#d0bcff] bg-transparent border-[#d0bcff] focus:ring-[#d0bcff] focus:ring-offset-[#2b2930]" name="audio_source" type="radio"/>
+</label>
+<label class="flex items-center justify-between p-4 border-b border-[#49454f] cursor-pointer hover:bg-[#49454f]/50 transition-colors">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#cac4d0]">headset_mic</span>
+<span class="font-body-lg text-body-lg text-[#e6e0e9]">Internal + Mic</span>
+</div>
+<input class="w-5 h-5 text-[#d0bcff] bg-transparent border-[#938f99] focus:ring-[#d0bcff] focus:ring-offset-[#2b2930]" name="audio_source" type="radio"/>
+</label>
+<label class="flex items-center justify-between p-4 cursor-pointer hover:bg-[#49454f]/50 transition-colors">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#cac4d0]">usb</span>
+<span class="font-body-lg text-body-lg text-[#e6e0e9]">External</span>
+</div>
+<input class="w-5 h-5 text-[#d0bcff] bg-transparent border-[#938f99] focus:ring-[#d0bcff] focus:ring-offset-[#2b2930]" name="audio_source" type="radio"/>
+</label>
+</div>
+</section>
+<!-- Helper Text -->
+<div class="flex items-start gap-2 mt-4 px-2">
+<span class="material-symbols-outlined text-[#cac4d0] text-[20px]">info</span>
+<p class="font-body-md text-body-md text-[#cac4d0]">Higher resolution and FPS will result in larger file sizes.</p>
+</div>
+</div>
+<!-- Sticky Bottom Actions -->
+<div class="absolute bottom-0 left-0 w-full bg-[#2b2930]/95 backdrop-blur-md pt-4 pb-safe px-margin-mobile border-t border-[#49454f] flex gap-3">
+<button class="flex-1 py-3 px-6 rounded-full bg-[#4a4458] text-[#e8def8] font-label-lg text-label-lg hover:bg-[#4a4458]/80 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">bookmark</span>
+                Save as Preset
+            </button>
+<button class="flex-1 py-3 px-6 rounded-full bg-[#d0bcff] text-[#381e72] font-label-lg text-label-lg hover:bg-[#eaddff] transition-colors shadow-sm">
+                Done
+            </button>
+</div>
+</div>
+</body></html>

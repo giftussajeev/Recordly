@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Recordly - Floating Recording Overlay States</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "on-error": "#ffffff",
+                "surface-bright": "#f9f9fc",
+                "inverse-primary": "#adc6ff",
+                "on-secondary-fixed-variant": "#3c4858",
+                "on-secondary-fixed": "#101c2b",
+                "on-tertiary-container": "#e6ceff",
+                "primary": "#004394",
+                "inverse-on-surface": "#f0f0f3",
+                "surface-tint": "#015ac1",
+                "tertiary-fixed": "#eedbff",
+                "primary-container": "#005ac1",
+                "tertiary-container": "#6c528c",
+                "surface-container": "#eeeef0",
+                "surface-container-high": "#e8e8ea",
+                "on-primary": "#ffffff",
+                "primary-fixed-dim": "#adc6ff",
+                "surface": "#f9f9fc",
+                "surface-container-lowest": "#ffffff",
+                "outline-variant": "#c2c6d5",
+                "surface-container-low": "#f3f3f6",
+                "on-tertiary-fixed": "#270d45",
+                "secondary-fixed": "#d7e3f8",
+                "secondary-fixed-dim": "#bbc7db",
+                "on-tertiary-fixed-variant": "#543b73",
+                "surface-variant": "#e2e2e5",
+                "on-secondary-container": "#596576",
+                "on-surface": "#1a1c1e",
+                "error": "#ba1a1a",
+                "on-primary-fixed-variant": "#004494",
+                "on-primary-container": "#c8d8ff",
+                "on-error-container": "#93000a",
+                "primary-fixed": "#d8e2ff",
+                "tertiary": "#533a73",
+                "on-background": "#1a1c1e",
+                "on-tertiary": "#ffffff",
+                "outline": "#727784",
+                "background": "#f9f9fc",
+                "inverse-surface": "#2f3133",
+                "on-primary-fixed": "#001a41",
+                "error-container": "#ffdad6",
+                "secondary": "#535f70",
+                "on-secondary": "#ffffff",
+                "secondary-container": "#d7e3f8",
+                "on-surface-variant": "#424753",
+                "surface-dim": "#dadadc",
+                "tertiary-fixed-dim": "#d8bafc",
+                "surface-container-highest": "#e2e2e5"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+        },
+        "spacing": {
+                "base": "8px",
+                "xs": "4px",
+                "lg": "24px",
+                "margin-desktop": "24px",
+                "md": "16px",
+                "xl": "32px",
+                "margin-mobile": "16px",
+                "gutter": "16px",
+                "sm": "8px"
+        },
+        "fontFamily": {
+                "title-lg": [
+                        "Roboto Flex"
+                ],
+                "label-md": [
+                        "Roboto Flex"
+                ],
+                "display-lg": [
+                        "Roboto Flex"
+                ],
+                "headline-lg-mobile": [
+                        "Roboto Flex"
+                ],
+                "body-lg": [
+                        "Roboto Flex"
+                ],
+                "body-md": [
+                        "Roboto Flex"
+                ],
+                "headline-lg": [
+                        "Roboto Flex"
+                ],
+                "metadata-sm": [
+                        "Roboto Flex"
+                ]
+        },
+        "fontSize": {
+                "title-lg": [
+                        "22px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "500"
+                        }
+                ],
+                "label-md": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.5px",
+                                "fontWeight": "500"
+                        }
+                ],
+                "display-lg": [
+                        "57px",
+                        {
+                                "lineHeight": "64px",
+                                "letterSpacing": "-0.25px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-lg-mobile": [
+                        "28px",
+                        {
+                                "lineHeight": "36px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "body-lg": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "letterSpacing": "0.5px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "body-md": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "letterSpacing": "0.25px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-lg": [
+                        "32px",
+                        {
+                                "lineHeight": "40px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "metadata-sm": [
+                        "11px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.4px",
+                                "fontWeight": "400"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>body {
+    /* Using absolute dark background as base before the blurred layer */
+    background-color: #000;
+    color: #e2e2e5;
+    /* surface-variant text for general dark mode */
+    }
+/* Blurred background styling to simulate being on top of a home screen */
+.blurred-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuC3zRi1PAHrctXSeAn3bIrirBNsW_rEhCtownlJCQagM5U4Gm6QkCOjKjM_iKGGwChDLFFCPhNfIZc1qA_nml6ub70xtH6eVw_3M7oH2qB7BwlOz-EmJtklJ-S7DG7Rpv3f-KHklaOWl0Dbg9pnm12McZmjvX9nYb2uhOsnIzSVJZSh0um71z4V4B5aw6oYyIOYmUBQ22fomT5-eyTcaXohFFcwbZLxrNoYCS8_zYAkx_8ooD0Z60h65HUuOEvXiJQoNyBHoFmPTtaJ);
+    /* Abstract blurry dark background */
+    background-size: cover;
+    background-position: center;
+    filter: blur(12px) brightness(0.4);
+    z-index: -1
+    }
+/* Glassmorphism utility for the overlay surfaces */
+.glass-surface {
+    background: rgba(47, 49, 51, 0.7);
+    /* inverse-surface with opacity */
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(194, 198, 213, 0.1);
+    /* outline-variant */
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5)
+    }
+/* Pulse animation for recording dot */
+@keyframes pulse-red {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(186, 26, 26, 0.7);
+        } 70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 6px rgba(186, 26, 26, 0);
+        } 100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(186, 26, 26, 0);
+        }
+    }
+.animate-recording {
+    animation: pulse-red 2s infinite
+    }</style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-sans antialiased min-h-screen flex flex-col justify-center items-center p-margin-mobile md:p-margin-desktop overflow-hidden">
+<!-- Background Layer -->
+<div class="blurred-bg" data-alt="A heavily blurred, abstract representation of a modern smartphone home screen in dark mode. The background consists of deep, muted gradients of indigo, slate, and charcoal, creating a smooth, out-of-focus canvas. The lighting is subtle, designed to act as a low-contrast backdrop that allows overlay elements to pop with clarity. The overall aesthetic is sleek, technical, and unobtrusive."></div>
+<!-- Header Area (for context, not part of global nav) -->
+<div class="fixed top-0 left-0 w-full p-margin-mobile flex justify-center z-10">
+<h1 class="font-title-lg text-title-lg text-primary-fixed-dim drop-shadow-md">Overlay Widget States</h1>
+</div>
+<!-- Container for Widget States -->
+<div class="flex flex-col gap-xl w-full max-w-md mt-16">
+<!-- STATE 1: Collapsed Bubble -->
+<div class="flex flex-col items-end gap-sm w-full">
+<span class="font-metadata-sm text-metadata-sm text-secondary-fixed-dim opacity-70 mr-2 uppercase tracking-wider">State 1: Collapsed</span>
+<div class="glass-surface rounded-full px-4 py-2 flex items-center gap-3 cursor-pointer hover:bg-surface-variant/20 transition-colors w-max self-end mr-4">
+<div class="w-3 h-3 rounded-full bg-error animate-recording"></div>
+<span class="font-body-md text-body-md text-on-surface-variant font-medium font-mono">00:14:23</span>
+</div>
+</div>
+<!-- STATE 2: Expanded Pill -->
+<div class="flex flex-col items-end gap-sm w-full">
+<span class="font-metadata-sm text-metadata-sm text-secondary-fixed-dim opacity-70 mr-2 uppercase tracking-wider">State 2: Expanded</span>
+<div class="glass-surface rounded-full p-2 flex items-center gap-2 w-max self-end mr-4">
+<!-- Timer Section -->
+<div class="flex items-center gap-2 pl-3 pr-2 border-r border-outline/30">
+<div class="w-2.5 h-2.5 rounded-full bg-error animate-recording"></div>
+<span class="font-body-md text-body-md text-on-surface-variant font-medium font-mono">00:14:23</span>
+</div>
+<!-- Controls Section -->
+<div class="flex items-center gap-1 px-1">
+<button aria-label="Pause Recording" class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-variant/30 hover:text-primary-fixed-dim transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">pause</span>
+</button>
+<button aria-label="Stop Recording" class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-variant/30 hover:text-error transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">stop</span>
+</button>
+<button aria-label="Toggle Microphone" class="w-10 h-10 rounded-full flex items-center justify-center text-primary-fixed-dim bg-primary/20 hover:bg-primary/30 transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">mic</span>
+</button>
+<button aria-label="Audio Source" class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-variant/30 hover:text-primary-fixed-dim transition-colors relative">
+<span class="material-symbols-outlined">headset_mic</span>
+<!-- Small indicator dot -->
+<span class="absolute top-2 right-2 w-1.5 h-1.5 bg-primary-fixed-dim rounded-full"></span>
+</button>
+</div>
+<!-- Collapse Button -->
+<button aria-label="Collapse Widget" class="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface-variant ml-1">
+<span class="material-symbols-outlined text-[20px]">close_fullscreen</span>
+</button>
+</div>
+</div>
+<!-- STATE 3: Audio Source Selector Open -->
+<div class="flex flex-col items-end gap-sm w-full mt-4">
+<span class="font-metadata-sm text-metadata-sm text-secondary-fixed-dim opacity-70 mr-2 uppercase tracking-wider">State 3: Source Selector Open</span>
+<div class="relative flex flex-col items-end w-full mr-4">
+<!-- The Open Menu -->
+<div class="glass-surface rounded-xl p-2 mb-2 w-64 flex flex-col gap-1 shadow-lg transform origin-bottom-right transition-all">
+<div class="px-3 py-2 border-b border-outline/20 mb-1 flex justify-between items-center">
+<span class="font-label-md text-label-md text-secondary-fixed-dim uppercase">Audio Input</span>
+<span class="material-symbols-outlined text-[16px] text-outline">settings</span>
+</div>
+<!-- Option 1: Selected -->
+<button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/15 text-primary-fixed-dim transition-colors text-left group">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">smartphone</span>
+<div class="flex flex-col flex-1">
+<span class="font-body-md text-body-md font-medium">Internal Mic</span>
+<span class="font-metadata-sm text-metadata-sm opacity-80">Default Device</span>
+</div>
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+</button>
+<!-- Option 2 -->
+<button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-variant/20 transition-colors text-left group">
+<span class="material-symbols-outlined text-[20px]">headset_mic</span>
+<div class="flex flex-col flex-1">
+<span class="font-body-md text-body-md group-hover:text-inverse-surface transition-colors">External Headset</span>
+<span class="font-metadata-sm text-metadata-sm text-outline">Connected via Bluetooth</span>
+</div>
+</button>
+<!-- Option 3 -->
+<button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-variant/20 transition-colors text-left group">
+<span class="material-symbols-outlined text-[20px]">mic_external_on</span>
+<div class="flex flex-col flex-1">
+<span class="font-body-md text-body-md group-hover:text-inverse-surface transition-colors">USB Interface</span>
+<span class="font-metadata-sm text-metadata-sm text-outline">Not Connected</span>
+</div>
+</button>
+</div>
+<!-- The Expanded Pill (Anchor for Menu) -->
+<div class="glass-surface rounded-full p-2 flex items-center gap-2 w-max self-end relative z-10 border-primary/30 bg-inverse-surface/90">
+<div class="flex items-center gap-2 pl-3 pr-2 border-r border-outline/30 opacity-50">
+<div class="w-2.5 h-2.5 rounded-full bg-error"></div>
+<span class="font-body-md text-body-md text-on-surface-variant font-medium font-mono">00:14:45</span>
+</div>
+<div class="flex items-center gap-1 px-1">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant opacity-50 cursor-not-allowed">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">pause</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant opacity-50 cursor-not-allowed">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">stop</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-primary-fixed-dim bg-primary/20 opacity-50 cursor-not-allowed">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">mic</span>
+</button>
+<!-- Active Button -->
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-primary-fixed-dim bg-surface-variant/30 ring-2 ring-primary/50 relative">
+<span class="material-symbols-outlined">headset_mic</span>
+</button>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-outline ml-1 opacity-50 cursor-not-allowed">
+<span class="material-symbols-outlined text-[20px]">close_fullscreen</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</body></html>

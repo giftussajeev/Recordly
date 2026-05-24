@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Recording Detail</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error-container": "#ffdad6",
+                        "on-primary-container": "#c8d8ff",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed-variant": "#523f5f",
+                        "on-tertiary-container": "#e8cef5",
+                        "inverse-surface": "#313030",
+                        "on-secondary": "#ffffff",
+                        "surface-container-highest": "#e6e1e1",
+                        "surface": "#fdf8f8",
+                        "surface-container-low": "#f7f3f2",
+                        "inverse-on-surface": "#f4f0ef",
+                        "on-secondary-fixed-variant": "#3c4858",
+                        "surface-dim": "#ddd9d9",
+                        "outline-variant": "#c2c6d5",
+                        "primary": "#004394",
+                        "on-primary": "#ffffff",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-background": "#1c1b1b",
+                        "background": "#fdf8f8",
+                        "on-tertiary-fixed": "#251431",
+                        "inverse-primary": "#adc6ff",
+                        "on-surface-variant": "#424753",
+                        "on-secondary-container": "#596576",
+                        "tertiary-container": "#6a5677",
+                        "primary-fixed": "#d8e2ff",
+                        "on-secondary-fixed": "#101c2b",
+                        "surface-tint": "#015ac1",
+                        "tertiary-fixed": "#f3daff",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed-variant": "#004494",
+                        "surface-container-high": "#ebe7e7",
+                        "on-surface": "#1c1b1b",
+                        "outline": "#727784",
+                        "on-error": "#ffffff",
+                        "surface-variant": "#e6e1e1",
+                        "secondary": "#535f70",
+                        "on-primary-fixed": "#001a41",
+                        "secondary-fixed": "#d7e3f8",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed-dim": "#d6bee4",
+                        "tertiary": "#513f5e",
+                        "primary-container": "#005ac1",
+                        "surface-container": "#f1edec",
+                        "secondary-container": "#d7e3f8",
+                        "surface-bright": "#fdf8f8",
+                        "secondary-fixed-dim": "#bbc7db"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-padding": "24px",
+                        "margin-tablet": "24px",
+                        "margin-mobile": "16px",
+                        "gutter": "16px",
+                        "baseline": "4px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Roboto Flex"],
+                        "label-lg": ["Roboto Flex"],
+                        "body-md": ["Roboto Flex"],
+                        "title-md": ["Roboto Flex"],
+                        "headline-lg": ["Roboto Flex"],
+                        "display-lg": ["Roboto Flex"],
+                        "label-md": ["Roboto Flex"],
+                        "title-lg": ["Roboto Flex"],
+                        "headline-lg-mobile": ["Roboto Flex"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "0.5px", "fontWeight": "400" }],
+                        "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "500" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.25px", "fontWeight": "400" }],
+                        "title-md": ["16px", { "lineHeight": "24px", "letterSpacing": "0.15px", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "0px", "fontWeight": "400" }],
+                        "display-lg": ["57px", { "lineHeight": "64px", "letterSpacing": "-0.25px", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "500" }],
+                        "title-lg": ["22px", { "lineHeight": "28px", "letterSpacing": "0px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "0px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Roboto Flex', sans-serif; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background antialiased min-h-screen flex flex-col pt-16 pb-safe">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl flex items-center justify-between px-margin-mobile h-16">
+<div class="flex items-center gap-2">
+<button aria-label="Go back" class="p-2 rounded-full hover:bg-surface-container-high transition-colors active:scale-95 text-on-surface">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">arrow_back</span>
+</button>
+<h1 class="font-title-lg text-title-lg font-bold text-on-surface">Recording Details</h1>
+</div>
+<div>
+<button aria-label="More options" class="p-2 rounded-full hover:bg-surface-container-high transition-colors active:scale-95 text-on-surface">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">more_vert</span>
+</button>
+</div>
+</header>
+<main class="flex-grow flex flex-col gap-6 p-margin-mobile">
+<!-- Video Player Preview Area -->
+<section class="w-full aspect-video rounded-[28px] overflow-hidden relative shadow-sm group bg-surface-container-high">
+<img alt="Video thumbnail" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="A high-resolution photograph capturing a dynamic mobile application screen recording context. The image features a vibrant, modern UI being interacted with, perhaps a colorful game or a complex dashboard. The lighting is bright and clean, reflecting an optimistic, 'light mode' aesthetic consistent with the app's corporate modern design system. The scene is shot from a slightly oblique angle to suggest depth, and the colors pop against the soft background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnFaaaoAsc9ki7A4B-JcP-IoaIT9Kd6ODAA8Y3Hv45HZcKIfn2Vb-tV10sl51i7l9MFxaU41jyLraeBtDqL4O-l_gm5AFedqIPCD1zYL_8hLPkub5atqeUigXgTc53jdREsnekP6bVMS__xkkrdPPkW3sHLnj49MYgSK3pzU1KmBWC5TwbtxOA2crPc0vK2tdvL9qiMigCze3fVmzkoo-3B88CSHYbNUrsOe0vDvMguQp2xuvx568-0UubtzbXSkFzb75o3Sp9DWUG"/>
+<div class="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<button class="w-16 h-16 bg-primary text-on-primary rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-transform shadow-md">
+<span class="material-symbols-outlined text-4xl" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+</div>
+<!-- Video Title Overlay (Optional based on design needs, adding for context) -->
+<div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
+<h2 class="text-white font-title-md text-title-md">Screen_Recording_20231024_1530.mp4</h2>
+</div>
+</section>
+<!-- Primary Actions -->
+<section class="flex flex-col sm:flex-row gap-3">
+<button class="flex-1 h-12 bg-primary text-on-primary rounded-full font-label-lg text-label-lg flex items-center justify-center gap-2 hover:bg-primary-container hover:text-on-primary-container transition-colors active:scale-95 shadow-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                Play
+            </button>
+<button class="flex-1 h-12 bg-transparent text-primary border border-outline rounded-full font-label-lg text-label-lg flex items-center justify-center gap-2 hover:bg-primary/5 transition-colors active:scale-95">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">share</span>
+                Share
+            </button>
+<button class="flex-1 h-12 bg-secondary-container text-on-secondary-container rounded-full font-label-lg text-label-lg flex items-center justify-center gap-2 hover:bg-surface-container-highest transition-colors active:scale-95">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">edit</span>
+                Edit
+            </button>
+</section>
+<!-- Metadata Grid (Bento style) -->
+<section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<!-- Duration -->
+<div class="bg-surface-container-low rounded-xl p-4 flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-on-surface-variant mb-1" style="font-variation-settings: 'FILL' 0;">schedule</span>
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Duration</span>
+<span class="font-title-md text-title-md text-on-surface mt-1">05:22</span>
+</div>
+<!-- Size -->
+<div class="bg-surface-container-low rounded-xl p-4 flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-on-surface-variant mb-1" style="font-variation-settings: 'FILL' 0;">sd_storage</span>
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Size</span>
+<span class="font-title-md text-title-md text-on-surface mt-1">1.2 GB</span>
+</div>
+<!-- Resolution & FPS combined for visual interest -->
+<div class="bg-surface-container-low rounded-xl p-4 flex flex-col items-center justify-center text-center col-span-2 md:col-span-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-on-surface-variant" style="font-variation-settings: 'FILL' 0;">hd</span>
+<span class="material-symbols-outlined text-on-surface-variant" style="font-variation-settings: 'FILL' 0;">speed</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Quality</span>
+<span class="font-title-md text-title-md text-on-surface mt-1">1080p · 60fps</span>
+</div>
+<!-- Date -->
+<div class="bg-surface-container-low rounded-xl p-4 flex flex-col items-center justify-center text-center col-span-2 md:col-span-1">
+<span class="material-symbols-outlined text-on-surface-variant mb-1" style="font-variation-settings: 'FILL' 0;">calendar_month</span>
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Date</span>
+<span class="font-title-md text-title-md text-on-surface mt-1">Oct 24, 2023</span>
+</div>
+</section>
+<!-- Secondary Actions List -->
+<section class="bg-surface-container rounded-2xl overflow-hidden mt-2">
+<ul class="flex flex-col">
+<li>
+<button class="w-full flex items-center px-4 py-4 hover:bg-surface-container-highest transition-colors text-left group">
+<span class="material-symbols-outlined text-on-surface-variant mr-4 group-hover:text-primary transition-colors" style="font-variation-settings: 'FILL' 0;">drive_file_rename_outline</span>
+<span class="font-body-lg text-body-lg text-on-surface flex-grow">Rename</span>
+</button>
+</li>
+<li class="h-[1px] bg-outline-variant/30 w-[calc(100%-32px)] mx-auto"></li>
+<li>
+<button class="w-full flex items-center px-4 py-4 hover:bg-surface-container-highest transition-colors text-left group">
+<span class="material-symbols-outlined text-on-surface-variant mr-4 group-hover:text-primary transition-colors" style="font-variation-settings: 'FILL' 0;">drive_file_move</span>
+<span class="font-body-lg text-body-lg text-on-surface flex-grow">Move to Folder</span>
+</button>
+</li>
+<li class="h-[1px] bg-outline-variant/30 w-[calc(100%-32px)] mx-auto"></li>
+<li>
+<button class="w-full flex items-center px-4 py-4 hover:bg-error-container transition-colors text-left group">
+<span class="material-symbols-outlined text-error mr-4" style="font-variation-settings: 'FILL' 0;">delete</span>
+<span class="font-body-lg text-body-lg text-error flex-grow">Delete</span>
+</button>
+</li>
+</ul>
+</section>
+</main>
+</body></html>
