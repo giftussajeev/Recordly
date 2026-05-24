@@ -1,8 +1,7 @@
 package com.recordly.app.ui.library
 
 import android.content.Intent
-import android.net.Uri
-import androidx.compose.foundation.Image
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -22,7 +21,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.runtime.collectAsState
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.VideoFrameDecoder
@@ -35,13 +33,16 @@ import java.util.concurrent.TimeUnit
 @Composable
 fun LibraryScreen(viewModel: LibraryViewModel) {
     val recordings by viewModel.recordings.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
     val context = LocalContext.current
-    
+    var showSearch by remember { mutableStateOf(false) }
+
     val imageLoader = remember {
         ImageLoader.Builder(context)
             .components {
                 add(VideoFrameDecoder.Factory())
             }
+            .crossfade(true)
             .build()
     }
 
@@ -49,35 +50,55 @@ fun LibraryScreen(viewModel: LibraryViewModel) {
         viewModel.refresh()
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Library", fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                ),
-                actions = {
-                    IconButton(onClick = { viewModel.refresh() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
-                    }
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.Search, contentDescription = "Search")
-                    }
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Header
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Library", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+            Row {
+                IconButton(onClick = { viewModel.refresh() }) {
+                    Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                 }
+                IconButton(onClick = { showSearch = !showSearch; if (!showSearch) viewModel.updateSearchQuery("") }) {
+                    Icon(
+                        if (showSearch) Icons.Default.Close else Icons.Default.Search,
+                        contentDescription = "Search"
+                    )
+                }
+            }
+        }
+
+        // Search bar
+        AnimatedVisibility(visible = showSearch) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { viewModel.updateSearchQuery(it) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 8.dp),
+                placeholder = { Text("Search recordings...") },
+                singleLine = true,
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                shape = RoundedCornerShape(12.dp)
             )
         }
-    ) { paddingValues ->
+
         if (recordings.isEmpty()) {
-            EmptyLibraryState(modifier = Modifier.padding(paddingValues))
+            EmptyLibraryState(modifier = Modifier.weight(1f))
         } else {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
                     .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(recordings) { recording ->
+                items(recordings, key = { it.id }) { recording ->
                     RecordingCard(
                         recording = recording,
                         imageLoader = imageLoader,
@@ -86,7 +107,9 @@ fun LibraryScreen(viewModel: LibraryViewModel) {
                                 setDataAndType(recording.uri, "video/mp4")
                                 flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
                             }
-                            context.startActivity(Intent.createChooser(intent, "Play with"))
+                            try {
+                                context.startActivity(Intent.createChooser(intent, "Play with"))
+                            } catch (_: Exception) {}
                         },
                         onShare = {
                             val shareIntent = Intent(Intent.ACTION_SEND).apply {
@@ -94,13 +117,16 @@ fun LibraryScreen(viewModel: LibraryViewModel) {
                                 putExtra(Intent.EXTRA_STREAM, recording.uri)
                                 flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
                             }
-                            context.startActivity(Intent.createChooser(shareIntent, "Share recording"))
+                            try {
+                                context.startActivity(Intent.createChooser(shareIntent, "Share recording"))
+                            } catch (_: Exception) {}
                         },
                         onDelete = {
                             viewModel.delete(recording)
                         }
                     )
                 }
+                item { Spacer(modifier = Modifier.height(8.dp)) }
             }
         }
     }
@@ -120,18 +146,18 @@ fun RecordingCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onPlay),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(width = 120.dp, height = 68.dp)
+                    .size(width = 110.dp, height = 62.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color.Black),
                 contentAlignment = Alignment.Center
@@ -147,7 +173,7 @@ fun RecordingCard(
                     imageVector = Icons.Default.PlayCircleOutline,
                     contentDescription = null,
                     tint = Color.White.copy(alpha = 0.8f),
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(28.dp)
                 )
             }
 
@@ -156,7 +182,7 @@ fun RecordingCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = recording.name,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -166,19 +192,23 @@ fun RecordingCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    val durationStr = String.format("%02d:%02d",
+                    val durationStr = String.format(
+                        "%02d:%02d",
                         TimeUnit.MILLISECONDS.toMinutes(recording.durationMs),
                         TimeUnit.MILLISECONDS.toSeconds(recording.durationMs) -
                                 TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(recording.durationMs))
                     )
-                    Text(durationStr, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    
+                    Text(durationStr, style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+
                     val sizeMb = recording.sizeBytes / (1024 * 1024)
-                    Text("${sizeMb}MB", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("${sizeMb}MB", style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Spacer(modifier = Modifier.height(2.dp))
-                val date = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(recording.dateAdded * 1000))
-                Text(date, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                val date = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                    .format(Date(recording.dateAdded * 1000))
+                Text(date, style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
             Box {
@@ -205,7 +235,7 @@ fun EmptyLibraryState(modifier: Modifier = Modifier) {
             imageVector = Icons.Default.VideoLibrary,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(

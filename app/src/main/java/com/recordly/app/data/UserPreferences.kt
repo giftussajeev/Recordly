@@ -7,5 +7,9 @@ data class UserPreferences(
     val bitrate: String = "Auto",
     val countdown: Int = 3,
     val audioSource: String = "No audio",
-    val floatingControls: Boolean = true
+    val floatingControls: Boolean = true,
+    val theme: String = "System",
+    val dynamicColor: Boolean = true,
+    val onboardingComplete: Boolean = false,
+    val performanceMode: Boolean = false
 )

@@ -1,65 +1,88 @@
 # Recordly
 
-Recordly is a clean, lightweight Material 3 screen recorder for Android. It was built with privacy and performance in mind, giving you full control over your recordings without any ads, tracking, or unnecessary bloat.
+A clean, lightweight screen recorder for Android. Built with Kotlin, Jetpack Compose, and Material 3.
+
+No ads. No analytics. No internet required. Everything stays on your device.
+
+[![Download latest APK](https://img.shields.io/badge/Download-Latest%20APK-blue?style=for-the-badge)](https://github.com/giftussajeev/Recordly/releases/latest)
+
+> **Note:** Recordly is under active development. The current release is a testing build — expect rough edges. If something breaks, please open an issue.
 
 ## Screenshots
 
-Screenshots will be added after device testing.
+| Record | Library | Settings |
+|--------|---------|----------|
+| ![Record](docs/screenshots/record-screen.jpg) | ![Library](docs/screenshots/library-screen.jpg) | ![Settings](docs/screenshots/settings-screen.jpg) |
 
-- Record Screen: `docs/screenshots/record.png`
-- Library: `docs/screenshots/library.png`
-- Settings: `docs/screenshots/settings.png`
-- About: `docs/screenshots/about.png`
+| Settings Options | About |
+|-----------------|-------|
+| ![Settings Options](docs/screenshots/settings-options.jpg) | ![About](docs/screenshots/about-screen.jpg) |
 
-## Features
+## What it does
 
-- **High-Performance Capture:** Record your screen at up to 240 FPS (device permitting) for slow-motion editing.
-- **Customizable Quality:** Choose your exact resolution (up to 1440p) and bitrate (up to 35 Mbps).
-- **Internal Audio:** Capture internal device audio on Android 10+ devices, or use your microphone on older devices.
-- **Floating Controls:** A secure, out-of-the-way floating overlay to pause, resume, and stop your recording.
-- **Privacy First:** 100% offline. No analytics, no tracking, and no internet required. Your recordings never leave your device unless you share them.
+- Records your screen as MP4 video
+- Configurable resolution (720p / 1080p / 1440p / Native), FPS, quality, and bitrate
+- Microphone audio capture (internal audio is a work in progress)
+- Floating overlay controls to stop/pause without switching apps
+- Saves recordings to `Movies/Recordly`
+- Built-in library to browse, play, share, and delete recordings
+- Supports Android 8.0 (Oreo) and up
 
-## What works right now (Version 1.1)
-- The core screen recording engine is fully functional with robust state management.
-- Settings are persisted and correctly affect the MediaRecorder output.
-- The UI features a completely overhauled native Material 3 design.
-- Recordings are saved locally in `Movies/Recordly` and browsable in a native Media library.
-- Strict and transparent permission handling.
+## What works right now (v1.3)
+
+- Screen recording with configurable settings
+- Settings persist between sessions (DataStore)
+- Theme switching: System / Light / Dark / AMOLED
+- Dynamic color (Material You) on Android 12+
+- Library shows real recordings from device storage with search
+- Permission handling before recording starts
+- Floating overlay and notification controls
+- Quick-edit chips on home screen with modern bottom sheet selectors
+
+## What doesn't work yet
+
+- Internal audio capture (Android limitation — requires AudioPlaybackCapture API)
+- Custom resolution input
+- Video trimming / editing
+- Save location picker
+- Quick settings tile
 
 ## Android Support
-Recordly supports Android 8.0 (API 26) and above. Internal audio capture is available on Android 10 (API 29) and above due to Android OS limitations.
 
-## Permissions Explained
-- **Foreground Service:** Required to keep the recording alive while you use other apps.
-- **Record Audio:** Required to capture microphone or internal audio.
-- **System Alert Window (Overlay):** Required to show the floating control widget.
-- **Post Notifications:** Required to show the recording status in your notification drawer.
+- **Minimum:** Android 8.0 (API 26)
+- **Target:** Android 15 (API 35)
+- **Internal audio:** Requires Android 10+ (not yet implemented)
+- **Dynamic color:** Requires Android 12+
 
-## Build Instructions
+## Permissions
 
-To build the project locally using Gradle:
+- **Screen Capture:** Records your screen (asked each time you start recording)
+- **Microphone:** Records audio from your mic (optional)
+- **Overlay:** Shows floating stop/pause controls
+- **Notifications:** Shows recording status in notification bar
+- **Storage:** Saves and reads your recordings
+
+All processing is local. Nothing is uploaded anywhere.
+
+## Build from source
 
 ```bash
-# Set your JAVA_HOME to a compatible JDK (JDK 17+)
+# Requires JDK 17+
+# Use Android Studio's bundled JDK if needed
 ./gradlew :app:assembleDebug
 ```
 
-## Install Debug APK
-
-Once built, you can install the debug APK to your connected device or emulator:
-
+Install to a connected device:
 ```bash
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-## Roadmap
-- Advanced video trimming in the Library screen.
-- Configurable countdown timer visuals.
-- Quick settings tile for immediate recording.
-
 ## Credits
+
 Vibecoded with love by Giftus Sajeev and Sanjith KS.
-Made with ChatGPT 5.5 Extended, Gemini Pro 3.1, and Claude Opus 4.7.
+
+Made with GPT-5.5 Extended, Gemini 3.1 Pro High, Claude Opus 4.7, and Google Stitch v3.
 
 ## License
-Recordly is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for details.
+
+Apache License 2.0. See [LICENSE](LICENSE) for details.

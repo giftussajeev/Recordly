@@ -20,6 +20,10 @@ class PreferencesRepository(private val context: Context) {
     private val COUNTDOWN = intPreferencesKey("countdown")
     private val AUDIO_SOURCE = stringPreferencesKey("audio_source")
     private val FLOATING_CONTROLS = booleanPreferencesKey("floating_controls")
+    private val THEME = stringPreferencesKey("theme")
+    private val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
+    private val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
+    private val PERFORMANCE_MODE = booleanPreferencesKey("performance_mode")
 
     val userPreferencesFlow: Flow<UserPreferences> = context.dataStore.data.map { prefs ->
         UserPreferences(
@@ -29,7 +33,11 @@ class PreferencesRepository(private val context: Context) {
             bitrate = prefs[BITRATE] ?: "Auto",
             countdown = prefs[COUNTDOWN] ?: 3,
             audioSource = prefs[AUDIO_SOURCE] ?: "No audio",
-            floatingControls = prefs[FLOATING_CONTROLS] ?: true
+            floatingControls = prefs[FLOATING_CONTROLS] ?: true,
+            theme = prefs[THEME] ?: "System",
+            dynamicColor = prefs[DYNAMIC_COLOR] ?: true,
+            onboardingComplete = prefs[ONBOARDING_COMPLETE] ?: false,
+            performanceMode = prefs[PERFORMANCE_MODE] ?: false
         )
     }
 
@@ -53,5 +61,17 @@ class PreferencesRepository(private val context: Context) {
     }
     suspend fun updateFloatingControls(value: Boolean) {
         context.dataStore.edit { it[FLOATING_CONTROLS] = value }
+    }
+    suspend fun updateTheme(value: String) {
+        context.dataStore.edit { it[THEME] = value }
+    }
+    suspend fun updateDynamicColor(value: Boolean) {
+        context.dataStore.edit { it[DYNAMIC_COLOR] = value }
+    }
+    suspend fun updateOnboardingComplete(value: Boolean) {
+        context.dataStore.edit { it[ONBOARDING_COMPLETE] = value }
+    }
+    suspend fun updatePerformanceMode(value: Boolean) {
+        context.dataStore.edit { it[PERFORMANCE_MODE] = value }
     }
 }

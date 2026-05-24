@@ -24,4 +24,7 @@ class SettingsViewModel(private val repository: PreferencesRepository) : ViewMod
     fun updateCountdown(value: Int) = viewModelScope.launch { repository.updateCountdown(value) }
     fun updateAudioSource(value: String) = viewModelScope.launch { repository.updateAudioSource(value) }
     fun updateFloatingControls(value: Boolean) = viewModelScope.launch { repository.updateFloatingControls(value) }
+    fun updateTheme(value: String) = viewModelScope.launch { repository.updateTheme(value) }
+    fun updateDynamicColor(value: Boolean) = viewModelScope.launch { repository.updateDynamicColor(value) }
+    fun updatePerformanceMode(value: Boolean) = viewModelScope.launch { repository.updatePerformanceMode(value) }
 }

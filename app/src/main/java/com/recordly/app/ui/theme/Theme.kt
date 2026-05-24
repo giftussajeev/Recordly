@@ -47,26 +47,36 @@ private val AmoledColorScheme = darkColorScheme(
 
 @Composable
 fun RecordlyTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    amoledTheme: Boolean = false,
+    themePreference: String = "System",
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
+    val systemDark = isSystemInDarkTheme()
+
+    val isDark = when (themePreference) {
+        "Light" -> false
+        "Dark" -> true
+        "AMOLED" -> true
+        else -> systemDark // "System"
+    }
+    val isAmoled = themePreference == "AMOLED"
+
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        amoledTheme -> AmoledColorScheme
-        darkTheme -> DarkColorScheme
+        isAmoled -> AmoledColorScheme
+        isDark -> DarkColorScheme
         else -> LightColorScheme
     }
+
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
             window.statusBarColor = colorScheme.background.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isDark
         }
     }
 

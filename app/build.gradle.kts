@@ -5,14 +5,14 @@ plugins {
 
 android {
     namespace = "com.recordly.app"
-    compileSdk = 35 // Targeting the latest SDK
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.recordly.app"
-        minSdk = 26 // Android 8.0 Oreo
+        minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 4
+        versionName = "1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

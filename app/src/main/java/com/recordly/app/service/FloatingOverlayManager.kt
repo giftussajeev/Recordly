@@ -46,7 +46,7 @@ class FloatingOverlayManager(private val context: Context) {
         val container = FrameLayout(context)
         val composeView = ComposeView(context).apply {
             setContent {
-                RecordlyTheme {
+                RecordlyTheme(themePreference = "System", dynamicColor = false) {
                     // TODO: Implement Compose Overlay UI here
                     // RecordlyOverlayBubble(isRecording, onRecordToggle, onMicToggle)
                 }

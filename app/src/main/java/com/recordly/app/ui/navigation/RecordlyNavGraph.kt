@@ -4,9 +4,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -19,12 +19,10 @@ import com.recordly.app.ui.library.LibraryScreen
 import com.recordly.app.ui.library.LibraryViewModel
 import com.recordly.app.ui.settings.SettingsScreen
 import com.recordly.app.ui.settings.SettingsViewModel
-
 import com.recordly.app.ui.about.AboutScreen
 import com.recordly.app.ui.about.PrivacyPolicyScreen
 import com.recordly.app.ui.about.TermsScreen
 import com.recordly.app.ui.about.LicensesScreen
-import com.recordly.app.ui.dashboard.RecordingSetupSheet
 
 @Composable
 fun RecordlyNavGraph(appContainer: AppContainer) {
@@ -34,7 +32,6 @@ fun RecordlyNavGraph(appContainer: AppContainer) {
     val settingsViewModel: SettingsViewModel = viewModel(factory = factory)
 
     var currentRoute by remember { mutableStateOf("dashboard") }
-    var showSetup by remember { mutableStateOf(false) }
 
     Scaffold(
         bottomBar = {
@@ -49,7 +46,7 @@ fun RecordlyNavGraph(appContainer: AppContainer) {
                     NavigationBarItem(
                         selected = currentRoute == "library",
                         onClick = { currentRoute = "library" },
-                        icon = { Icon(Icons.Default.List, contentDescription = "Library") },
+                        icon = { Icon(Icons.Default.VideoLibrary, contentDescription = "Library") },
                         label = { Text("Library") }
                     )
                     NavigationBarItem(
@@ -68,14 +65,9 @@ fun RecordlyNavGraph(appContainer: AppContainer) {
             }
         }
     ) { innerPadding ->
-        Modifier.padding(innerPadding).let {
+        Box(modifier = Modifier.padding(innerPadding)) {
             when (currentRoute) {
-                "dashboard" -> {
-                    RecordDashboardScreen(viewModel = recordViewModel, onOpenSetup = { showSetup = true })
-                    if (showSetup) {
-                        RecordingSetupSheet(onDismiss = { showSetup = false })
-                    }
-                }
+                "dashboard" -> RecordDashboardScreen(viewModel = recordViewModel)
                 "library" -> LibraryScreen(viewModel = libraryViewModel)
                 "settings" -> SettingsScreen(viewModel = settingsViewModel)
                 "about" -> AboutScreen(
