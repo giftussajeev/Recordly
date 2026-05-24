@@ -8,6 +8,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 
+import com.recordly.app.service.RecordingState
+import com.recordly.app.service.RecordingService
+
 class RecordViewModel(private val preferencesRepository: PreferencesRepository) : ViewModel() {
 
     val uiState: StateFlow<UserPreferences?> = preferencesRepository.userPreferencesFlow
@@ -16,8 +19,14 @@ class RecordViewModel(private val preferencesRepository: PreferencesRepository) 
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = null
         )
+        
+    val recordingState: StateFlow<RecordingState> = RecordingService.recordingState
 
-    fun startRecording(resultCode: Int, resultData: android.content.Intent) {
-        // This will be called from the UI when MediaProjection consent is granted
+    fun requestPermission() {
+        RecordingService.requestPermissionState()
+    }
+    
+    fun resetState() {
+        RecordingService.resetToIdle()
     }
 }

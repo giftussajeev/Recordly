@@ -19,11 +19,12 @@ Screenshots will be added after device testing.
 - **Floating Controls:** A secure, out-of-the-way floating overlay to pause, resume, and stop your recording.
 - **Privacy First:** 100% offline. No analytics, no tracking, and no internet required. Your recordings never leave your device unless you share them.
 
-## What works right now (Version 1.0)
-- The core screen recording engine is fully functional.
+## What works right now (Version 1.1)
+- The core screen recording engine is fully functional with robust state management.
 - Settings are persisted and correctly affect the MediaRecorder output.
-- The UI features a clean Material 3 design with light, dark, and AMOLED themes.
-- Recordings are saved locally in `Movies/Recordly`.
+- The UI features a completely overhauled native Material 3 design.
+- Recordings are saved locally in `Movies/Recordly` and browsable in a native Media library.
+- Strict and transparent permission handling.
 
 ## Android Support
 Recordly supports Android 8.0 (API 26) and above. Internal audio capture is available on Android 10 (API 29) and above due to Android OS limitations.
