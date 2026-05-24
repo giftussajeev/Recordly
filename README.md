@@ -58,7 +58,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 ## Credits
 Vibecoded with love by Giftus Sajeev and Sanjith KS.
-Made with ChatGPT, Gemini Pro 3.1, and Claude Opus 4.7.
+Made with ChatGPT 5.5 Extended, Gemini Pro 3.1, and Claude Opus 4.7.
 
 ## License
 Recordly is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for details.
