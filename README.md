@@ -18,7 +18,7 @@ It does not contain ads, trackers, or analytics. It works fully offline with no 
 
 ---
 
-## Screenshots
+## Screenshot
 
 <p align="center">
   <img src="assets/dashboard.png" width="300" alt="Dashboard Screen" />
