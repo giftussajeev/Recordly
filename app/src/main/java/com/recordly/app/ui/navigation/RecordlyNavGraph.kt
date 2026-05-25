@@ -104,7 +104,8 @@ fun RecordlyNavGraph(appContainer: AppContainer) {
                     onComplete = {
                         settingsViewModel.completeOnboarding()
                         currentRoute = ROUTE_DASHBOARD
-                    }
+                    },
+                    settingsViewModel = settingsViewModel
                 )
                 ROUTE_DASHBOARD -> RecordDashboardScreen(viewModel = recordViewModel)
                 ROUTE_LIBRARY -> LibraryScreen(viewModel = libraryViewModel)

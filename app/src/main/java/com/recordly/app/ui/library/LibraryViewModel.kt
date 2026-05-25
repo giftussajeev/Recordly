@@ -64,6 +64,18 @@ class LibraryViewModel(
         }
     }
 
+    fun renameRecording(recording: Recording, newName: String) {
+        val finalName = if (!newName.endsWith(".mp4")) "$newName.mp4" else newName
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                repository.renameRecording(recording.uri, finalName)
+                refresh()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
     fun toggleSelection(id: Long) {
         _selectedRecordingIds.value = _selectedRecordingIds.value.toMutableSet().apply {
             if (contains(id)) remove(id) else add(id)

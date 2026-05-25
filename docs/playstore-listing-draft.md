@@ -24,7 +24,7 @@ What it doesn't do:
 - No internet connection required
 - No data leaves your device
 
-Current version: 1.3
+Current version: 1.8
 
 Android 8.0+ required. Internal audio capture is a work in progress (Android OS limitation). Microphone recording works on all supported versions.
 

@@ -37,6 +37,7 @@ class FloatingOverlayManager(private val context: Context) {
     private var overlayView: View? = null
     private var isOverlayShowing = false
     private val isPausedFlow = MutableStateFlow(false)
+    private val timeSecondsFlow = MutableStateFlow(0L)
 
     fun showOverlay(isPaused: Boolean, onPauseToggle: () -> Unit, onStop: () -> Unit) {
         isPausedFlow.value = isPaused
@@ -64,9 +65,11 @@ class FloatingOverlayManager(private val context: Context) {
         val composeView = ComposeView(context).apply {
             setContent {
                 val paused = isPausedFlow.collectAsState().value
+                val seconds = timeSecondsFlow.collectAsState().value
                 RecordlyTheme(themePreference = "System", dynamicColor = false) {
                     RecordlyOverlayBubble(
                         isPaused = paused,
+                        timeSeconds = seconds,
                         onPauseToggle = onPauseToggle,
                         onStop = onStop
                     )
@@ -129,18 +132,42 @@ class FloatingOverlayManager(private val context: Context) {
             isOverlayShowing = false
         }
     }
+
+    fun updateTime(seconds: Long) {
+        timeSecondsFlow.value = seconds
+    }
 }
 
 @Composable
-fun RecordlyOverlayBubble(isPaused: Boolean, onPauseToggle: () -> Unit, onStop: () -> Unit) {
+fun RecordlyOverlayBubble(isPaused: Boolean, timeSeconds: Long, onPauseToggle: () -> Unit, onStop: () -> Unit) {
     Row(
         modifier = Modifier
             .shadow(8.dp, CircleShape)
             .background(MaterialTheme.colorScheme.surface, CircleShape)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+            .padding(horizontal = 14.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
+        // Red dot
+        Box(
+            modifier = Modifier
+                .size(10.dp)
+                .clip(CircleShape)
+                .background(if (isPaused) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f) else MaterialTheme.colorScheme.error)
+        )
+        
+        // Timer
+        val mm = timeSeconds / 60
+        val ss = timeSeconds % 60
+        androidx.compose.material3.Text(
+            text = String.format("%02d:%02d", mm, ss),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Spacer(modifier = Modifier.width(4.dp))
+
         IconButton(
             onClick = onPauseToggle,
             modifier = Modifier

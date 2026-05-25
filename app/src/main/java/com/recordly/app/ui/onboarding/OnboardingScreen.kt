@@ -29,11 +29,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
+import com.recordly.app.ui.settings.SettingsViewModel
 
 @Composable
-fun OnboardingScreen(onComplete: () -> Unit) {
+fun OnboardingScreen(onComplete: () -> Unit, settingsViewModel: SettingsViewModel) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
+    val uiState by settingsViewModel.uiState.collectAsState()
 
     // Permission states
     var notifGranted by remember {
@@ -114,6 +116,30 @@ fun OnboardingScreen(onComplete: () -> Unit) {
             lineHeight = 22.sp
         )
 
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Theme Switch
+        Text(
+            "Theme",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            listOf("System", "Light", "Dark").forEach { theme ->
+                FilterChip(
+                    selected = uiState?.theme == theme,
+                    onClick = { settingsViewModel.updateTheme(theme) },
+                    label = { Text(theme) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+        
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
@@ -269,7 +295,7 @@ fun OnboardingScreen(onComplete: () -> Unit) {
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            "Built with GPT-5.5 Extended, Gemini 3.1 Pro High, Claude Opus 4.7, and Google Stitch v3.",
+            "Vibecoded with love. Built with GPT-5.5 Extended, Gemini 3.1 Pro High, Claude Opus 4.7, and Google Stitch v3.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
             textAlign = TextAlign.Center,

@@ -1,16 +1,16 @@
-# Recordly 1.7
+# Recordly 1.8
 
 A beautiful, lightweight, privacy-first screen recorder for Android. Built natively with Kotlin and Jetpack Compose.
 
 No ads. No analytics. No internet needed. Everything stays on your device.
 
-**[⬇ Download latest debug APK (v1.7)](https://github.com/giftussajeev/Recordly/releases/latest)**
+**[⬇ Download latest debug APK (v1.8)](https://github.com/giftussajeev/Recordly/releases/latest)**
 
 > This is a debug build for testing. Not a Play Store release. Enable "Install unknown apps" in Android settings to sideload.
 
 ---
 
-## What's in v1.5
+## What's in v1.8
 
 **New home screen** — four large rounded preset cards for Resolution, FPS, Quality, and Audio. Tap any card to open a clean selector sheet.
 

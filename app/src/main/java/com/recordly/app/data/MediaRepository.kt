@@ -74,8 +74,8 @@ class MediaRepository(private val context: Context) {
             MediaStore.Video.Media.DATE_ADDED,
             MediaStore.Video.Media.RESOLUTION
         )
-        val selection = "${MediaStore.Video.Media.RELATIVE_PATH} LIKE ?"
-        val selectionArgs = arrayOf("%Movies/Recordly%")
+        val selection = "${MediaStore.Video.Media.RELATIVE_PATH} LIKE ? AND ${MediaStore.Video.Media.DISPLAY_NAME} NOT LIKE ?"
+        val selectionArgs = arrayOf("%Movies/Recordly%", "%.tmp")
         val sortOrder = "${MediaStore.Video.Media.DATE_ADDED} DESC"
 
         context.contentResolver.query(
@@ -120,6 +120,23 @@ class MediaRepository(private val context: Context) {
                 androidx.documentfile.provider.DocumentFile.fromSingleUri(context, uri)?.delete()
             } else {
                 context.contentResolver.delete(uri, null, null)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun renameRecording(uri: Uri, newName: String) {
+        try {
+            if (uri.scheme == "content" && uri.authority != MediaStore.AUTHORITY) {
+                // DocumentFile URI
+                androidx.documentfile.provider.DocumentFile.fromSingleUri(context, uri)?.renameTo(newName)
+            } else {
+                // MediaStore URI
+                val values = android.content.ContentValues().apply {
+                    put(MediaStore.Video.Media.DISPLAY_NAME, newName)
+                }
+                context.contentResolver.update(uri, values, null, null)
             }
         } catch (e: Exception) {
             e.printStackTrace()

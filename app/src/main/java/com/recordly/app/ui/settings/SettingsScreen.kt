@@ -390,7 +390,7 @@ private fun SettingsSheet(
                     SheetOption("Phone microphone", "Record your voice", prefs.audioSource == "Phone microphone") { onSelectAudio("Phone microphone") }
                     SheetOption(
                         "Internal audio",
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) "App audio · Coming soon" else "Not available on Android 8/9",
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) "App audio · Coming soon" else "Requires Android 10+",
                         selected = false,
                         enabled = false
                     ) {}

@@ -54,6 +54,14 @@ class RecordingService : Service() {
     private var overlayManager: FloatingOverlayManager? = null
     private var hasAudioSource = false
     private var currentOutputFile: File? = null
+    private var currentOutputDocUri: Uri? = null
+    private var currentParcelFileDescriptor: android.os.ParcelFileDescriptor? = null
+    private var isUsingSaf = false
+
+    private var timerJob: Job? = null
+    private var recordStartTime = 0L
+    private var pausedTime = 0L
+    private var totalPausedDuration = 0L
 
     private val serviceJob = SupervisorJob()
     private val serviceScope = CoroutineScope(Dispatchers.Main + serviceJob)
@@ -286,6 +294,11 @@ class RecordingService : Service() {
             _recordingState.value = RecordingState.Recording
             Log.d(TAG, "Recording started: ${recWidth}x${recHeight} @ ${targetFps}fps audio=$resolvedAudio")
             
+            recordStartTime = System.currentTimeMillis()
+            totalPausedDuration = 0L
+            pausedTime = 0L
+            startTimer()
+            
             if (floatingControls && android.provider.Settings.canDrawOverlays(this)) {
                 showFloatingControls(isPaused = false)
             }
@@ -436,7 +449,12 @@ class RecordingService : Service() {
         Log.d(TAG, "Video: ${width}x${height} @ ${fps}fps bitrate=$bitrate")
 
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-        val fileName = "Recordly_$timestamp.mp4"
+        val fileName = "Recordly_$timestamp.tmp"
+        
+        isUsingSaf = false
+        currentOutputDocUri = null
+        currentParcelFileDescriptor = null
+        currentOutputFile = null
         
         if (saveLocationUri.isNotEmpty()) {
             try {
@@ -447,13 +465,11 @@ class RecordingService : Service() {
                 if (docFile != null) {
                     val pfd = contentResolver.openFileDescriptor(docFile.uri, "w")
                     if (pfd != null) {
+                        currentParcelFileDescriptor = pfd
+                        currentOutputDocUri = docFile.uri
+                        isUsingSaf = true
                         mediaRecorder?.setOutputFile(pfd.fileDescriptor)
                         Log.d(TAG, "Output: ${docFile.uri}")
-                        // We must close the parcel file descriptor only after media recorder is done.
-                        // Actually, setOutputFile(FileDescriptor) doesn't close it, but MediaRecorder docs 
-                        // say it doesn't close it. However, we can close it after start() or prepare().
-                        // Let's close it here after prepare, but wait, prepare() needs it?
-                        // Let's not close it here just to be safe, though leaking it could happen.
                     } else {
                         throw Exception("Could not open file descriptor")
                     }
@@ -493,6 +509,7 @@ class RecordingService : Service() {
             _recordingState.value is RecordingState.Recording) {
             try {
                 mediaRecorder?.pause()
+                pausedTime = System.currentTimeMillis()
                 _recordingState.value = RecordingState.Paused
                 val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 nm.notify(NOTIFICATION_ID, buildNotification(isPaused = true))
@@ -512,6 +529,10 @@ class RecordingService : Service() {
             _recordingState.value is RecordingState.Paused) {
             try {
                 mediaRecorder?.resume()
+                if (pausedTime > 0) {
+                    totalPausedDuration += (System.currentTimeMillis() - pausedTime)
+                    pausedTime = 0L
+                }
                 _recordingState.value = RecordingState.Recording
                 val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 nm.notify(NOTIFICATION_ID, buildNotification(isPaused = false))
@@ -530,6 +551,7 @@ class RecordingService : Service() {
         Log.d(TAG, "stopRecordingSafely isError=$isError")
         _recordingState.value = RecordingState.Stopping
         countdownJob?.cancel()
+        timerJob?.cancel()
 
         var recordingWasStarted = false
 
@@ -557,12 +579,80 @@ class RecordingService : Service() {
         mediaProjection = null
         Log.d(TAG, "MediaProjection stopped")
 
+        // Close SAF file descriptor if opened
+        try {
+            currentParcelFileDescriptor?.close()
+            currentParcelFileDescriptor = null
+        } catch (e: Exception) {
+            Log.e(TAG, "Error closing SAF file descriptor", e)
+        }
+
         try { overlayManager?.hideOverlay() } catch (_: Exception) {}
 
-        // Delete partial file if recording never properly started
-        if (!recordingWasStarted && !isError) {
-            currentOutputFile?.let {
-                if (it.exists() && it.length() == 0L) it.delete()
+        // Handle .tmp renaming or cleanup
+        if (!recordingWasStarted || isError) {
+            // Delete partial/failed file
+            if (isUsingSaf) {
+                currentOutputDocUri?.let { uri ->
+                    try {
+                        androidx.documentfile.provider.DocumentFile.fromSingleUri(this, uri)?.delete()
+                        Log.d(TAG, "Deleted failed SAF file: $uri")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to delete SAF file", e)
+                    }
+                }
+            } else {
+                currentOutputFile?.let {
+                    if (it.exists()) {
+                        it.delete()
+                        Log.d(TAG, "Deleted failed local file: ${it.absolutePath}")
+                    }
+                }
+            }
+        } else {
+            // Success: Rename .tmp to .mp4
+            if (isUsingSaf) {
+                currentOutputDocUri?.let { uri ->
+                    try {
+                        val doc = androidx.documentfile.provider.DocumentFile.fromSingleUri(this, uri)
+                        if (doc != null && doc.name?.endsWith(".tmp") == true) {
+                            val newName = doc.name!!.replace(".tmp", ".mp4")
+                            doc.renameTo(newName)
+                            Log.d(TAG, "Renamed SAF file to $newName")
+                        }
+                        
+                        // Check if file is 0 bytes
+                        if (doc != null && doc.length() == 0L) {
+                            Log.w(TAG, "SAF File is 0 bytes, deleting.")
+                            doc.delete()
+                            _recordingState.value = RecordingState.Error("Recording resulted in an empty file.")
+                            stopForeground(STOP_FOREGROUND_REMOVE)
+                            stopSelf()
+                            return
+                        }
+                        Unit
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to rename SAF file", e)
+                    }
+                }
+            } else {
+                currentOutputFile?.let { file ->
+                    if (file.exists()) {
+                        if (file.length() == 0L) {
+                            Log.w(TAG, "Local File is 0 bytes, deleting.")
+                            file.delete()
+                            _recordingState.value = RecordingState.Error("Recording resulted in an empty file.")
+                            stopForeground(STOP_FOREGROUND_REMOVE)
+                            stopSelf()
+                            return
+                        } else if (file.name.endsWith(".tmp")) {
+                            val newFile = File(file.parent, file.name.replace(".tmp", ".mp4"))
+                            file.renameTo(newFile)
+                            Log.d(TAG, "Renamed local file to ${newFile.absolutePath}")
+                        }
+                        Unit
+                    }
+                }
             }
         }
 
@@ -656,6 +746,21 @@ class RecordingService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         serviceJob.cancel()
+        timerJob?.cancel()
         try { overlayManager?.hideOverlay() } catch (_: Exception) {}
+    }
+
+    private fun startTimer() {
+        timerJob?.cancel()
+        timerJob = serviceScope.launch {
+            while (true) {
+                if (_recordingState.value is RecordingState.Recording) {
+                    val elapsed = System.currentTimeMillis() - recordStartTime - totalPausedDuration
+                    val seconds = elapsed / 1000
+                    overlayManager?.updateTime(seconds)
+                }
+                delay(1000)
+            }
+        }
     }
 }

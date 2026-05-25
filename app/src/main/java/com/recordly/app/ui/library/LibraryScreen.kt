@@ -41,6 +41,7 @@ fun LibraryScreen(viewModel: LibraryViewModel) {
     var showSearch by remember { mutableStateOf(false) }
     
     val inSelectionMode = selectedIds.isNotEmpty()
+    var recordingToRename by remember { mutableStateOf<Recording?>(null) }
 
     val imageLoader = remember {
         ImageLoader.Builder(context)
@@ -84,6 +85,13 @@ fun LibraryScreen(viewModel: LibraryViewModel) {
                         } catch (_: Exception) {}
                     }) {
                         Icon(Icons.Default.Share, contentDescription = "Share selected")
+                    }
+                    if (selectedIds.size == 1) {
+                        IconButton(onClick = {
+                            recordingToRename = recordings.find { it.id == selectedIds.first() }
+                        }) {
+                            Icon(Icons.Default.Edit, contentDescription = "Rename selected")
+                        }
                     }
                     IconButton(onClick = { viewModel.deleteSelected() }) {
                         Icon(Icons.Default.Delete, contentDescription = "Delete selected")
@@ -162,6 +170,9 @@ fun LibraryScreen(viewModel: LibraryViewModel) {
                                 context.startActivity(Intent.createChooser(shareIntent, "Share recording"))
                             } catch (_: Exception) {}
                         },
+                        onRename = {
+                            recordingToRename = recording
+                        },
                         onDelete = {
                             viewModel.delete(recording)
                         }
@@ -169,6 +180,38 @@ fun LibraryScreen(viewModel: LibraryViewModel) {
                 }
                 item { Spacer(modifier = Modifier.height(8.dp)) }
             }
+        }
+
+        recordingToRename?.let { recording ->
+            var newName by remember { mutableStateOf(recording.name.removeSuffix(".mp4")) }
+            AlertDialog(
+                onDismissRequest = { recordingToRename = null },
+                title = { Text("Rename Recording") },
+                text = {
+                    OutlinedTextField(
+                        value = newName,
+                        onValueChange = { newName = it },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        if (newName.isNotBlank()) {
+                            viewModel.renameRecording(recording, newName)
+                        }
+                        recordingToRename = null
+                        if (inSelectionMode) viewModel.clearSelection()
+                    }) {
+                        Text("Save")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { recordingToRename = null }) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
     }
 }
@@ -183,6 +226,7 @@ fun RecordingCard(
     onPlay: () -> Unit,
     onLongPress: () -> Unit,
     onShare: () -> Unit,
+    onRename: () -> Unit,
     onDelete: () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -285,6 +329,7 @@ fun RecordingCard(
                     }
                     DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                         DropdownMenuItem(text = { Text("Share") }, onClick = { showMenu = false; onShare() })
+                        DropdownMenuItem(text = { Text("Rename") }, onClick = { showMenu = false; onRename() })
                         DropdownMenuItem(text = { Text("Delete") }, onClick = { showMenu = false; onDelete() })
                     }
                 }

@@ -677,7 +677,7 @@ fun QuickEditSheet(
                     SheetOptionRow(
                         "Internal audio",
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
-                            "App audio · Coming soon" else "Not available on Android 8/9",
+                            "App audio · Coming soon" else "Requires Android 10+",
                         selected = false,
                         enabled = false
                     ) {}

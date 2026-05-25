@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.8 (versionCode 9)
+### Library & File Management
+- Fixed .tmp file lifecycle and cleanup during failed/aborted recordings.
+- Recordings are properly renamed to .mp4 upon completion.
+- Implemented file renaming action in the Library.
+- Filtered out .tmp files from Library view.
+
+### Audio & Recording
+- Fixed audio source handling (MIC vs Internal vs None).
+- Explicitly disabled unsupported Internal Audio features for Android < 10.
+- Disabled Internal Audio in UI logic when not supported.
+- Implemented time tracking in the recording overlay.
+
+### Polish & General Fixes
+- Added theme switcher to Onboarding.
+- Updated About screen to version 1.8.
+
 ## 1.7 (versionCode 8)
 ### Library & Settings
 - Implemented real multi-select and batch actions (Share/Delete) in the Library screen.
