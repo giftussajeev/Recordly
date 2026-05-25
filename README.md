@@ -2,7 +2,7 @@
 
 [![Latest Release](https://img.shields.io/github/v/release/giftussajeev/Recordly?color=brightgreen&label=release&logo=github)](https://github.com/giftussajeev/Recordly/releases/latest)
 [![Platform](https://img.shields.io/badge/Platform-Android%208.0%2B-orange?logo=android)](https://developer.android.com)
-[![License](https://img.shields.io/github/license/giftussajeev/Recordly?color=blue)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue)](LICENSE)
 
 Recordly is a native, lightweight, and privacy-focused screen recorder for Android. Built with Jetpack Compose, Material 3, and Kotlin. 
 
