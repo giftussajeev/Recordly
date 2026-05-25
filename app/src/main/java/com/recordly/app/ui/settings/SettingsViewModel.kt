@@ -20,15 +20,12 @@ class SettingsViewModel(private val repository: PreferencesRepository) : ViewMod
     fun updateResolution(value: String) = viewModelScope.launch { repository.updateResolution(value) }
     fun updateFps(value: Int) = viewModelScope.launch { repository.updateFps(value) }
     fun updateQuality(value: String) = viewModelScope.launch { repository.updateQuality(value) }
-    fun updateBitrate(value: String) = viewModelScope.launch { repository.updateBitrate(value) }
     fun updateCountdown(value: Int) = viewModelScope.launch { repository.updateCountdown(value) }
     fun updateAudioSource(value: String) = viewModelScope.launch { repository.updateAudioSource(value) }
     fun updateFloatingControls(value: Boolean) = viewModelScope.launch { repository.updateFloatingControls(value) }
     fun updateTheme(value: String) = viewModelScope.launch { repository.updateTheme(value) }
     fun updateDynamicColor(value: Boolean) = viewModelScope.launch { repository.updateDynamicColor(value) }
-    fun updatePerformanceMode(value: Boolean) = viewModelScope.launch { repository.updatePerformanceMode(value) }
     fun updateSaveLocationUri(value: String) = viewModelScope.launch { repository.updateSaveLocationUri(value) }
-    fun updateShowTouches(value: Boolean) = viewModelScope.launch { repository.updateShowTouches(value) }
     fun completeOnboarding() = viewModelScope.launch { repository.updateOnboardingComplete(true) }
     fun resetOnboarding() = viewModelScope.launch { repository.updateOnboardingComplete(false) }
 }

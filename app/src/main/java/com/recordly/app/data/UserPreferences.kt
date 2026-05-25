@@ -2,16 +2,13 @@ package com.recordly.app.data
 
 data class UserPreferences(
     val resolution: String = "1080p",
-    val fps: Int = 30,               // default 30 — safest, most compatible
-    val quality: String = "Balanced",
-    val bitrate: String = "Auto",
-    val countdown: Int = 0,          // default no countdown — immediate start
-    val audioSource: String = "No audio",  // default no audio — avoids mic permission flow on first run
+    val fps: Int = 30,               // 30 = safest default; -1 = match display refresh rate
+    val quality: String = "Balanced", // Maps internally to bitrate: Low=8M, Balanced=12M, High=20M, Max=35M
+    val countdown: Int = 0,           // 0 = no countdown, >0 = seconds
+    val audioSource: String = "No audio",  // "No audio", "Phone microphone", "Internal audio"
     val floatingControls: Boolean = true,
-    val theme: String = "System",
-    val dynamicColor: Boolean = false,   // off by default — use stable Recordly palette
+    val theme: String = "System",     // "System", "Light", "Dark", "AMOLED"
+    val dynamicColor: Boolean = false,
     val onboardingComplete: Boolean = false,
-    val performanceMode: Boolean = false,
-    val saveLocationUri: String = "",
-    val showTouches: Boolean = false
+    val saveLocationUri: String = ""
 )

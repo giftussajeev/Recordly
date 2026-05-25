@@ -42,10 +42,6 @@ class RecordViewModel(private val preferencesRepository: PreferencesRepository) 
         preferencesRepository.updateQuality(value)
     }
 
-    fun updateBitrate(value: String) = viewModelScope.launch {
-        preferencesRepository.updateBitrate(value)
-    }
-
     fun updateAudioSource(value: String) = viewModelScope.launch {
         preferencesRepository.updateAudioSource(value)
     }

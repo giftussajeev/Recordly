@@ -3,6 +3,7 @@ package com.recordly.app.ui.about
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,18 +13,23 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.recordly.app.R
 
 @Composable
 fun AboutScreen(
@@ -33,6 +39,7 @@ fun AboutScreen(
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
+    var showAndroidInfo by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -52,7 +59,7 @@ fun AboutScreen(
 
         Spacer(modifier = Modifier.height(28.dp))
 
-        // ── App icon hero ──
+        // ── App icon hero — uses actual Recordly launcher icon ──
         Box(
             modifier = Modifier
                 .size(100.dp)
@@ -60,11 +67,10 @@ fun AboutScreen(
                 .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.VideoCameraBack,
-                contentDescription = null,
-                modifier = Modifier.size(60.dp),
-                tint = MaterialTheme.colorScheme.primary
+            Image(
+                painter = painterResource(R.mipmap.ic_launcher),
+                contentDescription = "Recordly icon",
+                modifier = Modifier.size(80.dp)
             )
         }
 
@@ -77,7 +83,7 @@ fun AboutScreen(
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            "Version 1.8",
+            "Version 1.9",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.SemiBold
@@ -110,10 +116,61 @@ fun AboutScreen(
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 InfoRow("App", "Recordly")
-                InfoRow("Version", "1.8")
+                InfoRow("Version", "1.9")
                 InfoRow("Package", "com.recordly.app")
-                InfoRow("Min Android", "Android 8.0 (API 26)+")
                 InfoRow("License", "Apache License 2.0")
+
+                // Android compatibility — expandable
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showAndroidInfo = !showAndroidInfo }
+                        .padding(vertical = 5.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Android compatibility", style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Android 8.0+", style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            if (showAndroidInfo) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                if (showAndroidInfo) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(
+                                "Minimum: Android 8.0 (API 26)",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                "• Android 8-9: Basic recording\n" +
+                                "• Android 10+: Internal audio capture\n" +
+                                "• Android 12+: Dynamic colors (Material You)\n" +
+                                "• Android 14+: Improved projection APIs",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                lineHeight = 18.sp
+                            )
+                        }
+                    }
+                }
             }
         }
 
@@ -185,7 +242,9 @@ fun AboutScreen(
             )
         ) {
             Column(
-                modifier = Modifier.padding(20.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(Icons.Default.Favorite, null,

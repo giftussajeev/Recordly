@@ -1,5 +1,48 @@
 # Changelog
 
+## 1.9 (versionCode 10)
+### Recording Pipeline Rewrite
+- **Recording actually works now**: Complete rewrite of MediaRecorder setup chain.
+- **MediaStore output** on Android 10+: Files are properly registered in MediaStore via `ContentValues`, so Library shows recordings immediately.
+- **MediaScannerConnection** on Android 8-9: Files saved via direct File API are scanned into MediaStore.
+- **Quality → Bitrate**: Quality presets now intelligently map to bitrate based on resolution and FPS. Removed redundant "Bitrate" setting.
+- **Auto-fallback**: If user config fails, automatically retries with 1080p/30fps/no audio.
+- **0-byte cleanup**: Detects and deletes empty recording files on failure.
+
+### Internal Audio
+- Enabled internal audio capture for Android 10+ (API 29+).
+- Uses MIC source with active MediaProjection for app audio capture.
+- Properly disabled with clear message on Android 8-9.
+
+### Match Display FPS
+- New "Match display" option records at the screen's native refresh rate.
+- FPS is always capped to the display's actual refresh rate.
+
+### Settings Cleanup
+- Removed "Bitrate" setting (merged into Quality).
+- Removed "Performance mode" (did nothing useful).
+- Removed "Show touches" (crash-prone system setting).
+- Added save location reset button.
+- Quality options now show approximate bitrate ranges.
+
+### Library Fixes
+- Fixed MediaStore query: removed unreliable `RESOLUTION` column, uses `MediaMetadataRetriever` instead.
+- Handles Android 8-9 where `RELATIVE_PATH` doesn't exist.
+- Skips 0-byte files from listing.
+
+### UI Polish
+- Record button now uses Google Material Red (not theme primary color).
+- About screen uses actual Recordly app icon (not generic icon).
+- About screen has expandable Android compatibility section.
+- **Telegram-style theme switching**: Changing themes now uses a circular reveal animation that expands from the top-right corner, revealing the new theme underneath. Inspired by Telegram's theme toggle.
+- Version updated to 1.9 everywhere.
+
+### Floating Overlay
+- Overlay now **auto-collapses** to a small dot + timer after 4 seconds of no interaction.
+- Tap the collapsed dot to expand controls back.
+- Any interaction (drag, button press) resets the auto-collapse timer.
+- This makes the overlay unobtrusive during fullscreen apps and games.
+
 ## 1.8 (versionCode 9)
 ### Library & File Management
 - Fixed .tmp file lifecycle and cleanup during failed/aborted recordings.

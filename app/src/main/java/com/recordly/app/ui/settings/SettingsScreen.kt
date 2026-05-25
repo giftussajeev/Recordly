@@ -1,6 +1,7 @@
 package com.recordly.app.ui.settings
 
 import android.os.Build
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -20,22 +21,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import android.content.Intent
 import android.net.Uri
-import android.provider.Settings
 import androidx.documentfile.provider.DocumentFile
 import com.recordly.app.data.UserPreferences
 
 /**
- * SettingsScreen — performance-optimized.
+ * SettingsScreen — v1.9 release-ready.
  *
- * Key decisions:
- * - `Column + verticalScroll` instead of LazyColumn. LazyColumn triggers expensive
- *   re-layout when ANY item changes because it recalculates slot indices. For a short
- *   settings list (~10 items), Column is cheaper.
- * - All composables are `@Stable` by contract (only primitive/immutable args).
- * - Bottom sheets are hoisted to the top level and only composed when `showSheet != null`.
- * - No `remember { derivedStateOf }` chains — the ViewModel emits a single stable snapshot.
- * - No side effects (no storage queries, no MediaStore) inside composition.
- * - `key()` not needed since we use Column (no LazyList slot logic).
+ * Changes from v1.8:
+ * - Removed "Bitrate" (merged into Quality)
+ * - Removed "Performance mode" (did nothing useful)
+ * - Removed "Show touches" (crash-prone, system setting, not worth the risk)
+ * - Added "Match display" FPS option
+ * - Internal audio enabled for Android 10+
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,7 +40,6 @@ fun SettingsScreen(
     viewModel: SettingsViewModel,
     onRunSetupAgain: () -> Unit = {}
 ) {
-    // Single state snapshot — settings screen only recomposes when prefs change
     val prefs by viewModel.uiState.collectAsState()
     val p = prefs ?: return
 
@@ -58,13 +54,6 @@ fun SettingsScreen(
                 Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
             )
             viewModel.updateSaveLocationUri(uri.toString())
-        }
-    }
-
-    val writeSettingsLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        if (Settings.System.canWrite(context)) {
-            viewModel.updateShowTouches(!p.showTouches)
-            Settings.System.putInt(context.contentResolver, "show_touches", if (!p.showTouches) 1 else 0)
         }
     }
 
@@ -87,11 +76,13 @@ fun SettingsScreen(
         SettingsSection(title = "Recording") {
             ClickRow("Resolution", p.resolution, Icons.Default.AspectRatio) { showSheet = "resolution" }
             Divider()
-            ClickRow("Frame rate", "${p.fps} FPS", Icons.Default.Speed) { showSheet = "fps" }
+            ClickRow(
+                "Frame rate",
+                if (p.fps == -1) "Match display" else "${p.fps} FPS",
+                Icons.Default.Speed
+            ) { showSheet = "fps" }
             Divider()
             ClickRow("Quality", p.quality, Icons.Default.HighQuality) { showSheet = "quality" }
-            Divider()
-            ClickRow("Bitrate", p.bitrate, Icons.Default.Tune) { showSheet = "bitrate" }
             Divider()
             ClickRow(
                 "Countdown",
@@ -103,15 +94,6 @@ fun SettingsScreen(
         // ── Audio ──
         SettingsSection(title = "Audio") {
             ClickRow("Audio source", p.audioSource, Icons.Default.Mic) { showSheet = "audio" }
-            if (p.audioSource.contains("Internal", ignoreCase = true)) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    "⚠ Internal audio is not yet supported. Recording will use no audio.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
-                )
-            }
         }
 
         // ── Appearance ──
@@ -138,22 +120,6 @@ fun SettingsScreen(
                 Icons.Default.PictureInPicture,
                 p.floatingControls
             ) { viewModel.updateFloatingControls(it) }
-            Divider()
-            SwitchRow(
-                "Show touches",
-                "Show visual feedback for taps",
-                Icons.Default.TouchApp,
-                p.showTouches
-            ) { checked ->
-                if (Settings.System.canWrite(context)) {
-                    viewModel.updateShowTouches(checked)
-                    Settings.System.putInt(context.contentResolver, "show_touches", if (checked) 1 else 0)
-                } else {
-                    val intent = Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS)
-                    intent.data = Uri.parse("package:${context.packageName}")
-                    writeSettingsLauncher.launch(intent)
-                }
-            }
         }
 
         // ── Storage ──
@@ -176,17 +142,26 @@ fun SettingsScreen(
             ) {
                 documentTreeLauncher.launch(null)
             }
-        }
-
-        // ── Performance ──
-        SettingsSection(title = "Performance") {
-            SwitchRow(
-                "Performance mode",
-                if (p.performanceMode) "Active · reduced animations, safe recording defaults"
-                else "Recommended for older/low-end devices",
-                Icons.Default.Bolt,
-                p.performanceMode
-            ) { viewModel.updatePerformanceMode(it) }
+            if (p.saveLocationUri.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { viewModel.updateSaveLocationUri("") }
+                        .padding(vertical = 4.dp, horizontal = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.RestartAlt, null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        "Reset to default (Movies/Recordly)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
         }
 
         // ── Setup ──
@@ -226,7 +201,6 @@ fun SettingsScreen(
             onSelectResolution = { viewModel.updateResolution(it); showSheet = null },
             onSelectFps = { viewModel.updateFps(it); showSheet = null },
             onSelectQuality = { viewModel.updateQuality(it); showSheet = null },
-            onSelectBitrate = { viewModel.updateBitrate(it); showSheet = null },
             onSelectCountdown = { viewModel.updateCountdown(it); showSheet = null },
             onSelectAudio = { viewModel.updateAudioSource(it); showSheet = null },
             onSelectTheme = { viewModel.updateTheme(it); showSheet = null }
@@ -332,7 +306,6 @@ private fun SettingsSheet(
     onSelectResolution: (String) -> Unit,
     onSelectFps: (Int) -> Unit,
     onSelectQuality: (String) -> Unit,
-    onSelectBitrate: (String) -> Unit,
     onSelectCountdown: (Int) -> Unit,
     onSelectAudio: (String) -> Unit,
     onSelectTheme: (String) -> Unit
@@ -355,6 +328,7 @@ private fun SettingsSheet(
                 }
                 "fps" -> {
                     SheetTitle("Frame Rate")
+                    SheetOption("Match display", "Uses your screen's refresh rate", prefs.fps == -1) { onSelectFps(-1) }
                     listOf(30 to "Standard · Most compatible", 60 to "Smooth · Good default",
                         90 to "High · Uses more resources", 120 to "Very high · Not universally supported"
                     ).forEach { (v, hint) ->
@@ -363,18 +337,12 @@ private fun SettingsSheet(
                 }
                 "quality" -> {
                     SheetTitle("Quality")
-                    listOf("Low" to "Smallest file size", "Balanced" to "Good balance",
-                        "High" to "High quality", "Max" to "Maximum quality · Large files"
+                    listOf("Low" to "Smallest files · ~4-8 Mbps",
+                        "Balanced" to "Good balance · ~8-14 Mbps",
+                        "High" to "High quality · ~15-25 Mbps",
+                        "Max" to "Maximum quality · ~25-40 Mbps · Large files"
                     ).forEach { (label, hint) ->
                         SheetOption(label, hint, prefs.quality == label) { onSelectQuality(label) }
-                    }
-                }
-                "bitrate" -> {
-                    SheetTitle("Bitrate")
-                    listOf("Auto" to "Estimated from resolution", "8 Mbps" to "Low-end devices",
-                        "12 Mbps" to "Balanced", "20 Mbps" to "High quality", "35 Mbps" to "Maximum"
-                    ).forEach { (label, hint) ->
-                        SheetOption(label, hint, prefs.bitrate == label) { onSelectBitrate(label) }
                     }
                 }
                 "countdown" -> {
@@ -388,12 +356,20 @@ private fun SettingsSheet(
                     SheetTitle("Audio Source")
                     SheetOption("No audio", "Record screen with no sound", prefs.audioSource == "No audio") { onSelectAudio("No audio") }
                     SheetOption("Phone microphone", "Record your voice", prefs.audioSource == "Phone microphone") { onSelectAudio("Phone microphone") }
-                    SheetOption(
-                        "Internal audio",
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) "App audio · Coming soon" else "Requires Android 10+",
-                        selected = false,
-                        enabled = false
-                    ) {}
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        SheetOption(
+                            "Internal audio",
+                            "Captures app audio · Android 10+",
+                            prefs.audioSource == "Internal audio"
+                        ) { onSelectAudio("Internal audio") }
+                    } else {
+                        SheetOption(
+                            "Internal audio",
+                            "Requires Android 10+",
+                            selected = false,
+                            enabled = false
+                        ) {}
+                    }
                 }
                 "theme" -> {
                     SheetTitle("Theme")

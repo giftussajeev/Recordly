@@ -37,18 +37,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.recordly.app.data.UserPreferences
 import com.recordly.app.service.RecordingService
 import com.recordly.app.service.RecordingState
+
+// Google Material Red — not harsh, not too bright
+private val RecordlyRed = Color(0xFFEA4335)
+private val RecordlyRedDark = Color(0xFFC5221F)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,7 +90,7 @@ fun RecordDashboardScreen(viewModel: RecordViewModel) {
                 putExtra(RecordingService.EXTRA_RESOLUTION, prefs?.resolution ?: "1080p")
                 putExtra(RecordingService.EXTRA_FPS, prefs?.fps ?: 30)
                 putExtra(RecordingService.EXTRA_AUDIO_SOURCE, prefs?.audioSource ?: "No audio")
-                putExtra(RecordingService.EXTRA_BITRATE, prefs?.bitrate ?: "Auto")
+                putExtra(RecordingService.EXTRA_QUALITY, prefs?.quality ?: "Balanced")
                 putExtra(RecordingService.EXTRA_COUNTDOWN, prefs?.countdown ?: 0)
                 putExtra(RecordingService.EXTRA_SCREEN_WIDTH, displayMetrics.widthPixels)
                 putExtra(RecordingService.EXTRA_SCREEN_HEIGHT, displayMetrics.heightPixels)
@@ -118,7 +119,7 @@ fun RecordDashboardScreen(viewModel: RecordViewModel) {
                 notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
             val audio = uiState?.audioSource ?: "No audio"
-            if (audio == "Phone microphone") {
+            if (audio == "Phone microphone" || audio == "Internal audio") {
                 micLauncher.launch(Manifest.permission.RECORD_AUDIO)
             }
             if (uiState?.floatingControls == true && !Settings.canDrawOverlays(context)) {
@@ -282,26 +283,6 @@ fun RecordDashboardScreen(viewModel: RecordViewModel) {
             }
         }
 
-        // Internal audio warning
-        val audioSrc = uiState?.audioSource ?: ""
-        if (audioSrc.contains("Internal", ignoreCase = true)) {
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f))
-            ) {
-                Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        "Internal audio not yet supported. Recording will use no audio.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                }
-            }
-        }
-
         Spacer(modifier = Modifier.height(24.dp))
     }
 
@@ -325,7 +306,7 @@ fun RecordDashboardScreen(viewModel: RecordViewModel) {
 private fun RecordingBadge() {
     Surface(
         shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
+        color = RecordlyRed.copy(alpha = 0.15f)
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
@@ -336,10 +317,10 @@ private fun RecordingBadge() {
                 modifier = Modifier
                     .size(8.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.error)
+                    .background(RecordlyRed)
             )
             Text("REC", style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                color = RecordlyRed, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -350,7 +331,7 @@ private fun DashboardStatusCard(state: RecordingState, modifier: Modifier = Modi
     val (bgColor, icon, title, subtitle) = when (state) {
         is RecordingState.Idle            -> StatusAppearance(null, Icons.Default.RadioButtonChecked, "Ready", "Tap the button below to start")
         is RecordingState.Saved           -> StatusAppearance(null, Icons.Default.CheckCircle, "Saved", "Recording saved to Movies/Recordly")
-        is RecordingState.Recording       -> StatusAppearance(MaterialTheme.colorScheme.error.copy(alpha = 0.08f), Icons.Rounded.FiberManualRecord, "Recording", "Recording in progress")
+        is RecordingState.Recording       -> StatusAppearance(RecordlyRed.copy(alpha = 0.08f), Icons.Rounded.FiberManualRecord, "Recording", "Recording in progress")
         is RecordingState.Paused          -> StatusAppearance(null, Icons.Default.PauseCircle, "Paused", "Recording is paused")
         is RecordingState.Stopping        -> StatusAppearance(null, Icons.Default.Save, "Saving", "Please wait...")
         is RecordingState.Error           -> StatusAppearance(MaterialTheme.colorScheme.errorContainer, Icons.Default.ErrorOutline, "Failed", state.message)
@@ -390,7 +371,7 @@ private fun DashboardStatusCard(state: RecordingState, modifier: Modifier = Modi
                 Icon(
                     icon,
                     contentDescription = null,
-                    tint = if (state is RecordingState.Recording) MaterialTheme.colorScheme.error
+                    tint = if (state is RecordingState.Recording) RecordlyRed
                     else MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(28.dp)
                 )
@@ -415,7 +396,7 @@ private data class StatusAppearance(
     val subtitle: String
 )
 
-// ── Large record/stop button ──
+// ── Large record/stop button — uses Material Red ──
 @Composable
 private fun RecordButton(
     recordingState: RecordingState,
@@ -448,9 +429,9 @@ private fun RecordButton(
                 .border(
                     width = 3.dp,
                     color = when {
-                        isRecording -> MaterialTheme.colorScheme.error.copy(alpha = 0.3f)
+                        isRecording -> RecordlyRed.copy(alpha = 0.3f)
                         isBusy      -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                        else        -> MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                        else        -> RecordlyRed.copy(alpha = 0.2f)
                     },
                     shape = CircleShape
                 )
@@ -460,7 +441,7 @@ private fun RecordButton(
             CircularProgressIndicator(
                 modifier = Modifier.size(56.dp),
                 strokeWidth = 4.dp,
-                color = MaterialTheme.colorScheme.primary
+                color = RecordlyRed
             )
         }
 
@@ -474,14 +455,14 @@ private fun RecordButton(
                     .size(100.dp)
                     .scale(buttonScale)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary)
+                    .background(RecordlyRed)
                     .clickable(onClick = onStart),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     Icons.Rounded.FiberManualRecord,
                     contentDescription = "Start Recording",
-                    tint = MaterialTheme.colorScheme.onPrimary,
+                    tint = Color.White,
                     modifier = Modifier.size(44.dp)
                 )
             }
@@ -497,14 +478,14 @@ private fun RecordButton(
                     .size(100.dp)
                     .scale(buttonScale)
                     .clip(RoundedCornerShape(28.dp))
-                    .background(MaterialTheme.colorScheme.error)
+                    .background(RecordlyRedDark)
                     .clickable(onClick = onStop),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     Icons.Rounded.Stop,
                     contentDescription = "Stop Recording",
-                    tint = MaterialTheme.colorScheme.onError,
+                    tint = Color.White,
                     modifier = Modifier.size(44.dp)
                 )
             }
@@ -531,7 +512,7 @@ private fun PresetGrid(
             PresetCard(
                 icon = Icons.Outlined.Speed,
                 label = "Frame Rate",
-                value = "${prefs.fps} FPS",
+                value = if (prefs.fps == -1) "Match" else "${prefs.fps} FPS",
                 onClick = { onEdit("fps") },
                 modifier = Modifier.weight(1f)
             )
@@ -644,6 +625,10 @@ fun QuickEditSheet(
                 }
                 "fps" -> {
                     SheetHeader("Frame Rate")
+                    SheetOptionRow(
+                        "Match display", "Uses your screen's refresh rate",
+                        currentPrefs?.fps == -1
+                    ) { onSelectFps(-1) }
                     listOf(
                         30  to "Standard · Compatible with all devices",
                         60  to "Smooth · Great for demos and tutorials",
@@ -674,13 +659,20 @@ fun QuickEditSheet(
                         currentPrefs?.audioSource == "No audio") { onSelectAudio("No audio") }
                     SheetOptionRow("Phone microphone", "Record your voice",
                         currentPrefs?.audioSource == "Phone microphone") { onSelectAudio("Phone microphone") }
-                    SheetOptionRow(
-                        "Internal audio",
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
-                            "App audio · Coming soon" else "Requires Android 10+",
-                        selected = false,
-                        enabled = false
-                    ) {}
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        SheetOptionRow(
+                            "Internal audio",
+                            "Captures app audio · Android 10+",
+                            currentPrefs?.audioSource == "Internal audio"
+                        ) { onSelectAudio("Internal audio") }
+                    } else {
+                        SheetOptionRow(
+                            "Internal audio",
+                            "Requires Android 10+",
+                            selected = false,
+                            enabled = false
+                        ) {}
+                    }
                 }
                 "countdown" -> {
                     SheetHeader("Countdown")

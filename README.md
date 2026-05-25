@@ -1,26 +1,36 @@
-# Recordly 1.8
+# Recordly 1.9
 
 A beautiful, lightweight, privacy-first screen recorder for Android. Built natively with Kotlin and Jetpack Compose.
 
 No ads. No analytics. No internet needed. Everything stays on your device.
 
-**[⬇ Download latest debug APK (v1.8)](https://github.com/giftussajeev/Recordly/releases/latest)**
+**[⬇ Download latest APK (v1.9)](https://github.com/giftussajeev/Recordly/releases/latest)**
 
-> This is a debug build for testing. Not a Play Store release. Enable "Install unknown apps" in Android settings to sideload.
+> Enable "Install unknown apps" in Android settings to sideload.
 
 ---
 
-## What's in v1.8
+## What's in v1.9
 
-**New home screen** — four large rounded preset cards for Resolution, FPS, Quality, and Audio. Tap any card to open a clean selector sheet.
+**Recording actually works now** — rewrote the entire recording pipeline. Files are now properly saved via MediaStore on Android 10+ (no more lost recordings). Auto-fallback to safe defaults if your chosen config fails.
 
-**Theme actually works now** — Light, Dark, AMOLED, and System all apply immediately when changed in Settings. No restart needed. AMOLED uses true black for OLED screens.
+**Internal audio** — enabled for Android 10+. Uses MIC source with active MediaProjection for app audio capture. Properly disabled with a clear message on Android 8-9.
 
-**Settings no longer lags** — rewrote the settings screen to be properly performant. Composables no longer re-render everything on every preference change.
+**Quality replaces Bitrate** — removed the redundant Bitrate setting. Quality presets (Low/Balanced/High/Max) now intelligently map to the right bitrate based on your resolution and FPS.
 
-**Recording more reliable** — MediaProjection callback now registered before `createVirtualDisplay` (was missing, causing silent failures on Android 14+). Auto-fallback to 1080p/30fps if your chosen config fails.
+**Match display FPS** — new option that records at your screen's native refresh rate (60Hz, 90Hz, 120Hz, etc.).
 
-**About page polished** — proper hero with icon, real GitHub link, clean credits.
+**Library works** — fixed MediaStore queries that were failing silently. Recordings now show up immediately after saving.
+
+**Record button is red** — uses Google Material Red, not the theme primary color. Consistent with what users expect from a record button.
+
+**Cleaned up Settings** — removed fake/broken features (Performance Mode, Show Touches). Every setting that exists actually works.
+
+**About screen polished** — shows actual Recordly app icon, expandable Android compatibility section, centered credits.
+
+**Telegram-style theme switching** — changing themes now plays a circular reveal animation that expands from the top-right corner, revealing the new theme underneath. Like Telegram.
+
+**Floating overlay auto-collapse** — the recording overlay collapses to a small dot + timer after 4 seconds of no interaction. Tap to expand. Unobtrusive in games and fullscreen apps.
 
 ---
 
@@ -30,12 +40,10 @@ No ads. No analytics. No internet needed. Everything stays on your device.
 |-----------------|-----------|
 | Android 8.0 (API 26) | ✅ |
 | Android 9.0 (API 28) | ✅ |
-| Android 10+ (API 29) | ✅ |
-| Android 12+ Material You | ✅ |
+| Android 10+ (API 29) | ✅ Internal audio |
+| Android 12+ Material You | ✅ Dynamic colors |
 | Android 14+ (API 34) | ✅ |
 | Android 15/16 (API 35) | ✅ |
-
-Internal audio capture (Android 10+) — coming in a future version.
 
 ---
 
@@ -43,13 +51,14 @@ Internal audio capture (Android 10+) — coming in a future version.
 
 - Screen recording to MP4
 - Resolution: 720p / 1080p / 1440p / Native
-- FPS: 30 / 60 / 90 / 120 (capped to display refresh rate)
-- Quality: Low / Balanced / High / Max
-- Audio: None or Microphone
-- Floating overlay stop button while recording
-- Library with search — browse, share, delete recordings
+- FPS: Match display / 30 / 60 / 90 / 120 (capped to display refresh rate)
+- Quality: Low / Balanced / High / Max (auto-maps to bitrate)
+- Audio: None / Microphone / Internal (Android 10+)
+- Floating overlay with stop/pause/timer while recording
+- Library with search, multi-select, share, rename, delete
 - Theme: System / Light / Dark / AMOLED
-- Material You (Android 12+)
+- Material You dynamic colors (Android 12+)
+- Custom save location via SAF
 - Recordings saved to `Movies/Recordly`
 
 ---
