@@ -3,8 +3,9 @@ package com.recordly.app.ui.settings
 import android.os.Build
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -16,92 +17,149 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel) {
+fun SettingsScreen(
+    viewModel: SettingsViewModel,
+    onRunSetupAgain: () -> Unit = {}
+) {
     val uiState by viewModel.uiState.collectAsState()
     val prefs = uiState ?: return
 
-    // Track which setting's bottom sheet to show
     var showSheet by remember { mutableStateOf<String?>(null) }
+    val scrollState = rememberScrollState()
 
-    LazyColumn(
+    Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(scrollState)
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Settings", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(8.dp))
-        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text("Settings", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(4.dp))
 
         // Recording section
-        item {
-            SettingsGroupCard(title = "Recording") {
-                SettingsClickRow("Resolution", prefs.resolution) { showSheet = "resolution" }
-                SettingsClickRow("FPS", "${prefs.fps} FPS") { showSheet = "fps" }
-                SettingsClickRow("Quality", prefs.quality) { showSheet = "quality" }
-                SettingsClickRow("Bitrate", prefs.bitrate) { showSheet = "bitrate" }
-                SettingsClickRow("Countdown", if (prefs.countdown == 0) "Off" else "${prefs.countdown}s") { showSheet = "countdown" }
+        SettingsGroupCard(title = "Recording") {
+            SettingsClickRow("Resolution", prefs.resolution) { showSheet = "resolution" }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            SettingsClickRow("Frame rate", "${prefs.fps} FPS") { showSheet = "fps" }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            SettingsClickRow("Quality", prefs.quality) { showSheet = "quality" }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            SettingsClickRow("Bitrate", prefs.bitrate) { showSheet = "bitrate" }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            SettingsClickRow("Countdown", if (prefs.countdown == 0) "Off" else "${prefs.countdown}s") {
+                showSheet = "countdown"
             }
         }
 
         // Audio section
-        item {
-            SettingsGroupCard(title = "Audio") {
-                SettingsClickRow("Audio Source", prefs.audioSource) { showSheet = "audio" }
-            }
-        }
-
-        // Controls section
-        item {
-            SettingsGroupCard(title = "Controls") {
-                SettingsSwitchRow("Floating overlay", prefs.floatingControls) {
-                    viewModel.updateFloatingControls(it)
-                }
-            }
-        }
-
-        // Storage section
-        item {
-            SettingsGroupCard(title = "Storage") {
-                SettingsInfoRow("Save location", "Movies/Recordly")
-            }
-        }
-
-        // Appearance section
-        item {
-            SettingsGroupCard(title = "Appearance") {
-                SettingsClickRow("Theme", prefs.theme) { showSheet = "theme" }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    SettingsSwitchRow("Dynamic color (Material You)", prefs.dynamicColor) {
-                        viewModel.updateDynamicColor(it)
-                    }
-                } else {
-                    SettingsInfoRow("Dynamic color", "Requires Android 12+")
-                }
-            }
-        }
-
-        // Performance section
-        item {
-            SettingsGroupCard(title = "Performance") {
-                SettingsSwitchRow("Performance mode", prefs.performanceMode) {
-                    viewModel.updatePerformanceMode(it)
-                }
+        SettingsGroupCard(title = "Audio") {
+            SettingsClickRow("Audio source", prefs.audioSource) { showSheet = "audio" }
+            if (prefs.audioSource.contains("Internal", ignoreCase = true)) {
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    "Reduces effects and prefers stable recording settings.",
+                    "Internal audio requires Android 10+ (coming soon). Use microphone or no audio for now.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(bottom = 4.dp)
                 )
             }
         }
 
-        item { Spacer(modifier = Modifier.height(24.dp)) }
+        // Controls section
+        SettingsGroupCard(title = "Controls") {
+            SettingsSwitchRow("Floating overlay controls", prefs.floatingControls) {
+                viewModel.updateFloatingControls(it)
+            }
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                "Shows a draggable stop button while recording.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+        }
+
+        // Storage section
+        SettingsGroupCard(title = "Storage") {
+            SettingsInfoRow("Save location", "Movies/Recordly")
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                "Recordings are saved to your device's Movies/Recordly folder.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+        }
+
+        // Appearance section
+        SettingsGroupCard(title = "Appearance") {
+            SettingsClickRow("Theme", prefs.theme) { showSheet = "theme" }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                SettingsSwitchRow("Dynamic color (Material You)", prefs.dynamicColor) {
+                    viewModel.updateDynamicColor(it)
+                }
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    "Uses your wallpaper colors for the app theme.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+            } else {
+                SettingsInfoRow("Dynamic color", "Requires Android 12+")
+            }
+        }
+
+        // Performance section
+        SettingsGroupCard(title = "Performance") {
+            SettingsSwitchRow("Performance mode", prefs.performanceMode) {
+                viewModel.updatePerformanceMode(it)
+            }
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                if (prefs.performanceMode)
+                    "Active: using safer defaults, reduced effects, and stable recording settings."
+                else
+                    "Reduces animations and uses stable recording settings to improve reliability on older devices.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+        }
+
+        // Setup section
+        SettingsGroupCard(title = "Setup") {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onRunSetupAgain)
+                    .padding(vertical = 14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Run permissions setup again", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "Review and grant app permissions",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Icon(
+                    Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
     }
 
-    // Bottom sheets for each setting
     showSheet?.let { sheet ->
         SettingsBottomSheet(
             sheetType = sheet,
@@ -123,15 +181,17 @@ fun SettingsGroupCard(title: String, content: @Composable ColumnScope.() -> Unit
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(bottom = 12.dp)
+                modifier = Modifier.padding(bottom = 8.dp)
             )
             content()
         }
@@ -144,14 +204,14 @@ fun SettingsClickRow(title: String, value: String, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(vertical = 14.dp),
+            .padding(vertical = 13.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = title, style = MaterialTheme.typography.bodyLarge)
+        Text(title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = value,
+                value,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -171,13 +231,13 @@ fun SettingsInfoRow(title: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 14.dp),
+            .padding(vertical = 13.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = title, style = MaterialTheme.typography.bodyLarge)
+        Text(title, style = MaterialTheme.typography.bodyLarge)
         Text(
-            text = value,
+            value,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -189,11 +249,11 @@ fun SettingsSwitchRow(title: String, checked: Boolean, onCheckedChange: (Boolean
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 6.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        Text(title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
         Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
@@ -217,7 +277,7 @@ fun SettingsBottomSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp)
+                .padding(bottom = 40.dp)
         ) {
             when (sheetType) {
                 "resolution" -> {
@@ -248,18 +308,16 @@ fun SettingsBottomSheet(
                     SheetTitle("Countdown")
                     listOf(0, 3, 5, 10).forEach { opt ->
                         SheetOption(
-                            if (opt == 0) "Off" else "${opt}s",
+                            if (opt == 0) "Off — start immediately" else "${opt}s",
                             prefs.countdown == opt
                         ) { onSelectCountdown(opt) }
                     }
                 }
                 "audio" -> {
                     SheetTitle("Audio Source")
-                    listOf("No audio", "Phone microphone").forEach { opt ->
-                        SheetOption(opt, prefs.audioSource == opt) { onSelectAudio(opt) }
-                    }
-                    // Internal audio shown but disabled
-                    SheetOption("Internal audio (not yet supported)", false, enabled = false) {}
+                    SheetOption("No audio", prefs.audioSource == "No audio") { onSelectAudio("No audio") }
+                    SheetOption("Phone microphone", prefs.audioSource == "Phone microphone") { onSelectAudio("Phone microphone") }
+                    SheetOption("Internal audio (coming soon)", false, enabled = false) {}
                 }
                 "theme" -> {
                     SheetTitle("Theme")

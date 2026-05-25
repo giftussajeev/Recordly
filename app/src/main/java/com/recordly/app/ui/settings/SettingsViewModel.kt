@@ -27,4 +27,6 @@ class SettingsViewModel(private val repository: PreferencesRepository) : ViewMod
     fun updateTheme(value: String) = viewModelScope.launch { repository.updateTheme(value) }
     fun updateDynamicColor(value: Boolean) = viewModelScope.launch { repository.updateDynamicColor(value) }
     fun updatePerformanceMode(value: Boolean) = viewModelScope.launch { repository.updatePerformanceMode(value) }
+    fun completeOnboarding() = viewModelScope.launch { repository.updateOnboardingComplete(true) }
+    fun resetOnboarding() = viewModelScope.launch { repository.updateOnboardingComplete(false) }
 }

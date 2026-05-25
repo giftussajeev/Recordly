@@ -1,38 +1,48 @@
 # Changelog
 
-## 1.3
-- Fixed recording failure caused by invalid audio source handling (REMOTE_SUBMIX crash)
-- Fixed content being cut off behind bottom navigation bar (NavGraph padding bug)
-- Fixed About page crash
-- Fixed Settings dropdowns replaced with modern bottom sheet selectors
-- Connected theme switching (System / Light / Dark / AMOLED) to actual app behavior
-- Connected dynamic color toggle to Material You on Android 12+
-- Added Performance mode setting (replaces "Low-end device mode")
-- Library search now filters recordings by filename
-- Library refresh re-queries MediaStore properly
-- Made preset chips on home screen interactive with quick-edit bottom sheets
-- Removed cluttered permission checklist from home screen
-- Improved recording state machine with better error handling and logging
-- Safe audio source fallback when internal audio is unavailable
-- Default audio source changed to "No audio" to prevent first-run crashes
-- Version bumped to 1.3 everywhere (Gradle, About, README, docs)
-- Rewrote README to be more honest and practical
-- Added real screenshots to docs
+## 1.4 (versionCode 5)
+### Fixed
+- **Critical: Recording startup crash** — removed `display?.refreshRate` and `resources.displayMetrics` calls from Service context (they throw "Context not associated with display" on Android 11+). All display metrics (width, height, density, refresh rate) are now passed from Activity as Intent extras.
+- **About page crash** — replaced `LazyColumn` with `Column + verticalScroll`, replaced `Image(painterResource(ic_launcher))` with Icon-based composable to avoid mipmap load crashes on some devices.
+- **Settings lag** — replaced `LazyColumn` in Settings with `Column + verticalScroll`. LazyColumn was triggering unnecessary recomposition of all items on state changes.
+- **MediaRecorder order** — moved audio encoder setup before video encoder (required by API contract). Ensures even dimensions for H264 encoder.
+- **Partial file cleanup** — corrupted/empty output files are now deleted when recording fails to start.
 
-## 1.1
-- Native Material 3 UI overhaul across all screens
-- Recording state machine fixes (fixed 2-sec stop bug and Start/Stop toggle behavior)
-- Strict permission flow improvements
-- Settings screen completely redesigned with functional components
-- Library screen redesigned with real MediaStore query and Coil thumbnails
-- Legal and About pages made fully native and navigable
-- New professional adaptive app icon
+### Added
+- **Welcome / onboarding screen** — shown on first launch. Step-by-step permission setup for notifications, microphone, and overlay. Explains screen capture consent. Shows credits tastefully. Stored in DataStore.
+- **"Run setup again"** option in Settings to re-open onboarding anytime.
+- **Countdown chip** on home screen quick edit.
+- **Internal audio helper text** — Android 10+ note in audio selector, Android 8/9 unavailability explained.
 
-## 1.0
-- Initial debug-ready version of Recordly
-- Material 3 UI
-- Screen recording foundation
-- Recording settings
-- Recordings library
-- Floating controls / notification fallback
-- About, privacy, license, and Play Store draft docs
+### Changed
+- Default FPS: 60 → 30 (safer, more compatible)
+- Default quality: High → Balanced
+- Default countdown: 3s → None (immediate start)
+- NavGraph waits for DataStore to load before showing any screen (prevents flash of wrong screen)
+- Settings now shows helper text for each section
+
+## 1.3 (versionCode 4)
+### Fixed
+- `setAudioSource(REMOTE_SUBMIX)` crash — internal audio now falls back to No audio
+- Audio encoder operator precedence bug — audio encoder no longer set unconditionally on Android 10+
+- NavGraph padding — content no longer obscured by bottom navigation bar
+- About page intent crash — all external intents wrapped in try-catch
+
+### Added
+- Interactive preset chips on home screen with ModalBottomSheet selectors
+- Theme switching (System / Light / Dark / AMOLED) via DataStore
+- Dynamic color toggle (Material You, Android 12+)
+- Performance mode toggle
+- Library search bar
+
+## 1.2 (versionCode 3)
+- Initial MediaStore library integration
+- Settings restructure
+
+## 1.1 (versionCode 2)
+- Native Jetpack Compose UI overhaul
+- Permission flow fixes
+- Recording state machine
+
+## 1.0 (versionCode 1)
+- Initial release
