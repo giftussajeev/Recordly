@@ -6,7 +6,7 @@
 
 Recordly is a native, lightweight, and privacy-focused screen recorder for Android. Built with Jetpack Compose, Material 3, and Kotlin. 
 
-It does not contain ads, trackers, or analytics. It works fully offline with no internet permission required.
+It does not contain ads, trackers, or analytics. It works fully offline with no internet required.
 
 ---
 
