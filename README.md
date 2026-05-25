@@ -1,76 +1,60 @@
 # Recordly
 
-A clean, lightweight screen recorder for Android. Built with Kotlin, Jetpack Compose, and Material 3.
+A lightweight, native screen recorder for Android. Clean UI, no clutter. Built with Jetpack Compose and Material 3.
 
-No ads. No analytics. No internet required. Everything stays on your device.
+No ads. No analytics. No internet needed. Everything stays on your device.
 
-**[⬇ Download latest APK (debug/testing)](https://github.com/giftussajeev/Recordly/releases/latest)**
+**[⬇ Download latest debug APK (v1.5)](https://github.com/giftussajeev/Recordly/releases/latest)**
 
-> This is a debug testing APK, not a Play Store release. Install at your own risk. See [Releases](https://github.com/giftussajeev/Recordly/releases) for all versions.
-
----
-
-## Screenshots
-
-| Record | Library | Settings | About |
-|--------|---------|----------|-------|
-| ![Record](docs/screenshots/record-screen.jpg) | ![Library](docs/screenshots/library-screen.jpg) | ![Settings](docs/screenshots/settings-screen.jpg) | ![About](docs/screenshots/about-screen.jpg) |
+> This is a debug build for testing. Not a Play Store release. Enable "Install unknown apps" in Android settings to sideload.
 
 ---
 
-## What it does
+## What's in v1.5
 
-- Records your screen as MP4
-- Configurable resolution (720p / 1080p / 1440p / Native), FPS, quality, and bitrate
-- Microphone audio recording (optional)
-- Floating overlay controls to stop/pause without switching apps
-- Saves to `Movies/Recordly`
-- Built-in library to browse, play, share, and delete recordings
-- Theme switching: System / Light / Dark / AMOLED
-- Material You dynamic color (Android 12+)
+**New home screen** — four large rounded preset cards for Resolution, FPS, Quality, and Audio. Tap any card to open a clean selector sheet.
 
-## What works in v1.4
+**Theme actually works now** — Light, Dark, AMOLED, and System all apply immediately when changed in Settings. No restart needed. AMOLED uses true black for OLED screens.
 
-- Screen recording with configurable settings
-- First-run welcome/onboarding screen with permission setup
-- Settings persist across sessions (DataStore)
-- Theme switching works (including AMOLED)
-- Dynamic color (Material You) toggle on Android 12+
-- Library shows real recordings with search
-- Quick-edit chips on home screen
-- Smooth Settings screen (no more lag)
-- About page stable (no longer crashes)
+**Settings no longer lags** — rewrote the settings screen to be properly performant. Composables no longer re-render everything on every preference change.
 
-## What doesn't work yet
+**Recording more reliable** — MediaProjection callback now registered before `createVirtualDisplay` (was missing, causing silent failures on Android 14+). Auto-fallback to 1080p/30fps if your chosen config fails.
 
-- Internal audio capture (Android OS limitation — requires `AudioPlaybackCapture` API — coming in a future version)
-- Custom resolution input
-- Video trimming / editing
-- Save location picker
-- Quick settings tile
+**About page polished** — proper hero with icon, real GitHub link, clean credits.
 
-## Android support
+---
 
-- **Minimum:** Android 8.0 (API 26)
-- **Target:** Android 15 (API 35)
-- **Internal audio:** Requires Android 10+ (not yet implemented)
-- **Dynamic color:** Requires Android 12+
+## Supports
 
-## Permissions
+| Android version | Supported |
+|-----------------|-----------|
+| Android 8.0 (API 26) | ✅ |
+| Android 9.0 (API 28) | ✅ |
+| Android 10+ (API 29) | ✅ |
+| Android 12+ Material You | ✅ |
+| Android 14+ (API 34) | ✅ |
+| Android 15/16 (API 35) | ✅ |
 
-| Permission | Why |
-|------------|-----|
-| Screen Capture | Records your screen (asked each time) |
-| Microphone | Records audio (optional) |
-| Display over apps | Floating stop button while recording |
-| Notifications | Recording status notification |
-| Storage | Saves and reads recordings |
+Internal audio capture (Android 10+) — coming in a future version.
 
-Nothing is uploaded or shared. All data stays on your device.
+---
+
+## Features
+
+- Screen recording to MP4
+- Resolution: 720p / 1080p / 1440p / Native
+- FPS: 30 / 60 / 90 / 120 (capped to display refresh rate)
+- Quality: Low / Balanced / High / Max
+- Audio: None or Microphone
+- Floating overlay stop button while recording
+- Library with search — browse, share, delete recordings
+- Theme: System / Light / Dark / AMOLED
+- Material You (Android 12+)
+- Recordings saved to `Movies/Recordly`
+
+---
 
 ## Build from source
-
-Requires JDK 17+. Use Android Studio's bundled JDK if needed.
 
 ```bash
 # Windows
@@ -78,7 +62,6 @@ set JAVA_HOME=C:\Program Files\Android\Android Studio\jbr
 .\gradlew.bat :app:assembleDebug
 
 # macOS/Linux
-export JAVA_HOME=/path/to/android-studio/jbr
 ./gradlew :app:assembleDebug
 ```
 
@@ -87,12 +70,16 @@ Install to a connected device:
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
+---
+
 ## Credits
 
 Vibecoded with love by Giftus Sajeev and Sanjith KS.
 
 Made with GPT-5.5 Extended, Gemini 3.1 Pro High, Claude Opus 4.7, and Google Stitch v3.
 
+---
+
 ## License
 
-Apache License 2.0. See [LICENSE](LICENSE) for details.
+Apache License 2.0. See [LICENSE](LICENSE).

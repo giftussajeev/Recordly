@@ -12,9 +12,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
-import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.VideoCameraBack
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -42,7 +41,7 @@ fun AboutScreen(
             .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         Text(
             "About",
@@ -51,20 +50,20 @@ fun AboutScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(28.dp))
 
-        // App icon — using composable drawing, not Image/painterResource to avoid mipmap crashes
+        // ── App icon hero ──
         Box(
             modifier = Modifier
-                .size(96.dp)
+                .size(100.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.VideoCameraBack,
-                contentDescription = "Recordly icon",
-                modifier = Modifier.size(56.dp),
+                contentDescription = null,
+                modifier = Modifier.size(60.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
         }
@@ -74,136 +73,124 @@ fun AboutScreen(
         Text(
             "Recordly",
             style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.ExtraBold
         )
-
-        Text(
-            "A clean, lightweight screen recorder.",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-
         Spacer(modifier = Modifier.height(4.dp))
-
         Text(
-            "Version 1.4",
-            style = MaterialTheme.typography.bodyMedium,
+            "Version 1.5",
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.SemiBold
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            "A clean, lightweight screen recorder for Android.\nNo ads. No tracking. Everything stays on your device.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            lineHeight = 20.sp
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // App info card
+        // ── App info card ──
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            )
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.Info,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                    Icon(Icons.Default.Info, null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        "App info",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Text("App info", style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
                 }
                 Spacer(modifier = Modifier.height(12.dp))
-                AboutInfoRow("App", "Recordly")
-                AboutInfoRow("Version", "1.4")
-                AboutInfoRow("Package", "com.recordly.app")
-                AboutInfoRow("Min Android", "Android 8.0 (API 26)+")
-                AboutInfoRow("License", "Apache License 2.0")
+                InfoRow("App", "Recordly")
+                InfoRow("Version", "1.5")
+                InfoRow("Package", "com.recordly.app")
+                InfoRow("Min Android", "Android 8.0 (API 26)+")
+                InfoRow("License", "Apache License 2.0")
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-        // Links card
+        // ── Links card ──
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            )
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Column {
-                AboutActionRow(
+                LinkRow(
                     title = "GitHub",
                     subtitle = "github.com/giftussajeev/Recordly",
+                    icon = Icons.Default.Code,
                     onClick = {
                         try {
                             context.startActivity(
                                 Intent(Intent.ACTION_VIEW,
                                     Uri.parse("https://github.com/giftussajeev/Recordly"))
                             )
-                        } catch (e: Exception) {
+                        } catch (_: Exception) {
                             Toast.makeText(context, "Could not open link", Toast.LENGTH_SHORT).show()
                         }
                     }
                 )
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-                AboutActionRow(
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp),
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                LinkRow(
                     title = "Play Store",
                     subtitle = "Coming soon",
+                    icon = Icons.Default.Shop,
                     enabled = false,
                     onClick = {
-                        Toast.makeText(context, "Coming soon on Play Store!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Play Store listing coming soon!", Toast.LENGTH_SHORT).show()
                     }
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-        // Legal card
+        // ── Legal card ──
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            )
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Column {
-                AboutActionRow("Privacy Policy", null, onClick = onNavigateToPrivacy)
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-                AboutActionRow("Terms & Conditions", null, onClick = onNavigateToTerms)
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-                AboutActionRow("Open-source licenses", null, onClick = onNavigateToLicenses)
+                LegalRow("Privacy Policy", onClick = onNavigateToPrivacy)
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp),
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                LegalRow("Terms & Conditions", onClick = onNavigateToTerms)
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp),
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                LegalRow("Open-source licenses", onClick = onNavigateToLicenses)
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        // Credits
+        // ── Credits card ──
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(18.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
             )
         ) {
             Column(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Icon(
-                    Icons.Default.Code,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
+                Icon(Icons.Default.Favorite, null,
+                    tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
+                Spacer(modifier = Modifier.height(10.dp))
                 Text(
                     "Vibecoded with love by",
                     style = MaterialTheme.typography.bodySmall,
@@ -212,15 +199,22 @@ fun AboutScreen(
                 )
                 Text(
                     "Giftus Sajeev & Sanjith KS",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    "Made with GPT-5.5 Extended, Gemini 3.1 Pro High,\nClaude Opus 4.7, and Google Stitch v3.",
+                    "Made with",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    "GPT-5.5 Extended · Gemini 3.1 Pro High\nClaude Opus 4.7 · Google Stitch v3",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
                     textAlign = TextAlign.Center,
                     lineHeight = 18.sp
                 )
@@ -232,30 +226,24 @@ fun AboutScreen(
 }
 
 @Composable
-private fun AboutInfoRow(label: String, value: String) {
+private fun InfoRow(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 5.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(
-            label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium
-        )
+        Text(label, style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
     }
 }
 
 @Composable
-private fun AboutActionRow(
+private fun LinkRow(
     title: String,
-    subtitle: String?,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     enabled: Boolean = true,
     onClick: () -> Unit
 ) {
@@ -264,31 +252,40 @@ private fun AboutActionRow(
             .fillMaxWidth()
             .clickable(enabled = enabled, onClick = onClick)
             .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
+        Icon(icon, null,
+            tint = if (enabled) MaterialTheme.colorScheme.primary
+            else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp))
+        Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                title,
-                style = MaterialTheme.typography.bodyLarge,
+            Text(title, style = MaterialTheme.typography.bodyLarge,
                 color = if (enabled) MaterialTheme.colorScheme.onSurface
-                else MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            if (subtitle != null) {
-                Text(
-                    subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
+                else MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if (enabled) {
-            Icon(
-                Icons.AutoMirrored.Filled.ArrowForwardIos,
-                contentDescription = null,
-                modifier = Modifier.size(16.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, null,
+                modifier = Modifier.size(14.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+    }
+}
+
+@Composable
+private fun LegalRow(title: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, null,
+            modifier = Modifier.size(14.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

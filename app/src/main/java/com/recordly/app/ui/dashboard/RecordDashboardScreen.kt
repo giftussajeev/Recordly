@@ -12,9 +12,14 @@ import android.view.WindowManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -23,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.rounded.FiberManualRecord
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material3.*
@@ -30,10 +36,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.recordly.app.data.UserPreferences
 import com.recordly.app.service.RecordingService
@@ -46,25 +57,21 @@ fun RecordDashboardScreen(viewModel: RecordViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     val recordingState by viewModel.recordingState.collectAsState()
 
+    // Which preset card was tapped — drives bottom sheet
     var editingChip by remember { mutableStateOf<String?>(null) }
 
     val projectionManager = remember {
         context.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
     }
 
-    // Capture display metrics from Activity context NOW (before service starts)
-    // This avoids the "Context not associated with display" crash in Service.
-    val displayMetrics = remember {
-        context.resources.displayMetrics
-    }
+    // Capture display metrics from Activity context (NEVER from Service)
+    val displayMetrics = remember { context.resources.displayMetrics }
 
     val mediaProjectionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
             val prefs = uiState
-
-            // Get refresh rate safely from Activity context (not Service)
             val refreshRate: Float = try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     (context as? Activity)?.display?.refreshRate ?: 60f
@@ -73,9 +80,7 @@ fun RecordDashboardScreen(viewModel: RecordViewModel) {
                     (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager)
                         .defaultDisplay.refreshRate
                 }
-            } catch (e: Exception) {
-                60f
-            }
+            } catch (_: Exception) { 60f }
 
             val intent = Intent(context, RecordingService::class.java).apply {
                 action = RecordingService.ACTION_START
@@ -86,7 +91,6 @@ fun RecordDashboardScreen(viewModel: RecordViewModel) {
                 putExtra(RecordingService.EXTRA_AUDIO_SOURCE, prefs?.audioSource ?: "No audio")
                 putExtra(RecordingService.EXTRA_BITRATE, prefs?.bitrate ?: "Auto")
                 putExtra(RecordingService.EXTRA_COUNTDOWN, prefs?.countdown ?: 0)
-                // Pass display info so Service doesn't need to query it
                 putExtra(RecordingService.EXTRA_SCREEN_WIDTH, displayMetrics.widthPixels)
                 putExtra(RecordingService.EXTRA_SCREEN_HEIGHT, displayMetrics.heightPixels)
                 putExtra(RecordingService.EXTRA_SCREEN_DENSITY, displayMetrics.densityDpi)
@@ -100,148 +104,206 @@ fun RecordDashboardScreen(viewModel: RecordViewModel) {
 
     val notificationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { /* result handled, proceed */ }
+    ) { /* proceed */ }
 
     val micLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { /* result handled */ }
+    ) { /* proceed */ }
 
     LaunchedEffect(recordingState) {
         if (recordingState is RecordingState.RequestingPermission) {
-            // 1. Notification permission (Android 13+)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
-
-            // 2. Mic permission if needed
             val audio = uiState?.audioSource ?: "No audio"
-            if (audio == "Phone microphone" || audio == "Internal audio + microphone") {
+            if (audio == "Phone microphone") {
                 micLauncher.launch(Manifest.permission.RECORD_AUDIO)
             }
-
-            // 3. Overlay permission check — if needed and not granted, redirect to settings
             if (uiState?.floatingControls == true && !Settings.canDrawOverlays(context)) {
-                runCatching {
+                try {
                     context.startActivity(
                         Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                             Uri.parse("package:${context.packageName}"))
                     )
-                }
+                } catch (_: Exception) {}
                 viewModel.resetState()
                 return@LaunchedEffect
             }
-
-            // 4. Launch screen capture consent
             mediaProjectionLauncher.launch(projectionManager.createScreenCaptureIntent())
         }
     }
 
     val scrollState = rememberScrollState()
+    val isIdle = recordingState is RecordingState.Idle
+            || recordingState is RecordingState.Saved
+            || recordingState is RecordingState.Error
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(horizontal = 16.dp)
     ) {
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            "Recordly",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Status card
-        RecordingStatusCard(recordingState)
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Big action button
-        ActionArea(
-            recordingState = recordingState,
-            onStart = { viewModel.requestPermission() },
-            onStop = {
-                val intent = Intent(context, RecordingService::class.java).apply {
-                    action = RecordingService.ACTION_STOP
-                }
-                context.startService(intent)
+        // ── Header ──
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(
+                    "Recordly",
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    "Screen Recorder",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-        )
+            if (recordingState is RecordingState.Recording) {
+                RecordingBadge()
+            }
+        }
 
-        val isIdle = recordingState is RecordingState.Idle ||
-                recordingState is RecordingState.Saved ||
-                recordingState is RecordingState.Error
+        // ── Status card ──
+        Spacer(modifier = Modifier.height(12.dp))
+        DashboardStatusCard(recordingState, modifier = Modifier.padding(horizontal = 16.dp))
 
-        if (isIdle) {
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Current preset config card
-            ConfigCard(
-                uiState = uiState,
-                onChipClick = { editingChip = it }
-            )
-
-            // Internal audio warning
-            val audio = uiState?.audioSource ?: ""
-            if (audio.contains("Internal", ignoreCase = true)) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
+        // ── Record button ──
+        Spacer(modifier = Modifier.height(24.dp))
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            RecordButton(
+                recordingState = recordingState,
+                onStart = { viewModel.requestPermission() },
+                onStop = {
+                    context.startService(
+                        Intent(context, RecordingService::class.java).apply {
+                            action = RecordingService.ACTION_STOP
+                        }
                     )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            Icons.Default.Warning,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
+                }
+            )
+        }
+
+        // ── Countdown pill ──
+        if (uiState != null && isIdle) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                val cd = uiState!!.countdown
+                SuggestionChip(
+                    onClick = { editingChip = "countdown" },
+                    label = {
                         Text(
-                            "Internal audio capture not yet supported. Recording will use no audio.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onErrorContainer
+                            if (cd == 0) "No countdown" else "Countdown: ${cd}s",
+                            style = MaterialTheme.typography.labelMedium
                         )
+                    },
+                    icon = { Icon(Icons.Default.Timer, null, modifier = Modifier.size(14.dp)) }
+                )
+            }
+        }
+
+        // ── Preset 2×2 grid ──
+        if (isIdle && uiState != null) {
+            Spacer(modifier = Modifier.height(20.dp))
+            Text(
+                "Recording Settings",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 20.dp)
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            PresetGrid(
+                prefs = uiState!!,
+                onEdit = { editingChip = it },
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+        }
+
+        // ── Error / saved feedback ──
+        AnimatedVisibility(
+            visible = recordingState is RecordingState.Error,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            if (recordingState is RecordingState.Error) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                ) {
+                    Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.Top) {
+                        Icon(Icons.Default.ErrorOutline, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text("Recording failed", style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onErrorContainer)
+                            Text(
+                                (recordingState as RecordingState.Error).message,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.85f)
+                            )
+                        }
                     }
                 }
             }
         }
 
-        // Save confirmation
-        if (recordingState is RecordingState.Saved) {
-            Spacer(modifier = Modifier.height(8.dp))
+        AnimatedVisibility(
+            visible = recordingState is RecordingState.Saved,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
             Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
             ) {
-                Row(
-                    modifier = Modifier.padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Default.CheckCircle, contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary)
+                Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Recording saved to Movies/Recordly",
-                        style = MaterialTheme.typography.bodyMedium)
+                    Text("Saved to Movies/Recordly", style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer)
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        // Internal audio warning
+        val audioSrc = uiState?.audioSource ?: ""
+        if (audioSrc.contains("Internal", ignoreCase = true)) {
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f))
+            ) {
+                Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        "Internal audio not yet supported. Recording will use no audio.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
     }
 
-    // Quick edit sheets
+    // Quick-edit bottom sheets
     editingChip?.let { chip ->
         QuickEditSheet(
             chipType = chip,
@@ -256,71 +318,87 @@ fun RecordDashboardScreen(viewModel: RecordViewModel) {
     }
 }
 
+// ── Recording badge (shown in header while recording) ──
 @Composable
-fun RecordingStatusCard(state: RecordingState) {
-    val (icon, iconTint, title, subtitle) = when (state) {
-        is RecordingState.Idle -> Quad(Icons.Default.CheckCircle,
-            null, "Ready to record", "Tap Start to begin")
-        is RecordingState.Saved -> Quad(Icons.Default.CheckCircle,
-            null, "Recording saved", "Tap Start to record again")
-        is RecordingState.Recording -> Quad(Icons.Rounded.FiberManualRecord,
-            Color.Red, "Recording", "Recording in progress...")
-        is RecordingState.Paused -> Quad(Icons.Default.PauseCircle,
-            null, "Paused", "Recording is paused")
-        is RecordingState.Stopping -> Quad(Icons.Default.Save,
-            null, "Saving...", "Please wait")
-        is RecordingState.Error -> Quad(Icons.Default.ErrorOutline,
-            null, "Recording failed", state.message)
-        else -> Quad(Icons.Default.HourglassTop, null, "Starting...", "")
+private fun RecordingBadge() {
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(5.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.error)
+            )
+            Text("REC", style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+// ── Status card ──
+@Composable
+private fun DashboardStatusCard(state: RecordingState, modifier: Modifier = Modifier) {
+    val (bgColor, icon, title, subtitle) = when (state) {
+        is RecordingState.Idle            -> StatusAppearance(null, Icons.Default.RadioButtonChecked, "Ready", "Tap the button below to start")
+        is RecordingState.Saved           -> StatusAppearance(null, Icons.Default.CheckCircle, "Saved", "Recording saved to Movies/Recordly")
+        is RecordingState.Recording       -> StatusAppearance(MaterialTheme.colorScheme.error.copy(alpha = 0.08f), Icons.Rounded.FiberManualRecord, "Recording", "Recording in progress")
+        is RecordingState.Paused          -> StatusAppearance(null, Icons.Default.PauseCircle, "Paused", "Recording is paused")
+        is RecordingState.Stopping        -> StatusAppearance(null, Icons.Default.Save, "Saving", "Please wait...")
+        is RecordingState.Error           -> StatusAppearance(MaterialTheme.colorScheme.errorContainer, Icons.Default.ErrorOutline, "Failed", state.message)
+        is RecordingState.RequestingPermission -> StatusAppearance(null, Icons.Default.HourglassTop, "Starting", "Requesting permission...")
+        else                              -> StatusAppearance(null, Icons.Default.HourglassTop, "Starting", "")
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
-            containerColor = when (state) {
-                is RecordingState.Recording -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-                is RecordingState.Error -> MaterialTheme.colorScheme.errorContainer
-                else -> MaterialTheme.colorScheme.surfaceVariant
-            }
+            containerColor = bgColor ?: MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
-        Row(
-            modifier = Modifier.padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (state is RecordingState.Countdown) {
+        if (state is RecordingState.Countdown) {
+            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     "${state.secondsLeft}",
-                    style = MaterialTheme.typography.displayMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.displaySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
-                    Text("Starting in...", style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold)
-                    Text("Get ready!", style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Starting in...", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    Text("Get ready!", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-            } else if (state is RecordingState.Stopping) {
-                CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 3.dp)
-                Spacer(modifier = Modifier.width(16.dp))
-                Text("Saving recording...", style = MaterialTheme.typography.titleMedium)
-            } else {
+            }
+        } else if (state is RecordingState.Stopping) {
+            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.5.dp)
+                Spacer(modifier = Modifier.width(14.dp))
+                Text("Saving recording...", style = MaterialTheme.typography.titleSmall)
+            }
+        } else {
+            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     icon,
                     contentDescription = null,
-                    tint = iconTint ?: MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(32.dp)
+                    tint = if (state is RecordingState.Recording) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(28.dp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
-                    Text(title, style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold)
+                    Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                     if (subtitle.isNotEmpty()) {
                         Text(subtitle, style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2)
                     }
                 }
             }
@@ -328,37 +406,71 @@ fun RecordingStatusCard(state: RecordingState) {
     }
 }
 
-// Helper data class to avoid destructuring issues
-private data class Quad<A, B, C, D>(val a: A, val b: B, val c: C, val d: D)
+private data class StatusAppearance(
+    val bgColor: Color?,
+    val icon: ImageVector,
+    val title: String,
+    val subtitle: String
+)
 
+// ── Large record/stop button ──
 @Composable
-fun ActionArea(
+private fun RecordButton(
     recordingState: RecordingState,
     onStart: () -> Unit,
     onStop: () -> Unit
 ) {
-    val isIdle = recordingState is RecordingState.Idle ||
-            recordingState is RecordingState.Saved ||
-            recordingState is RecordingState.Error
-    val isActiveRecording = recordingState is RecordingState.Recording ||
-            recordingState is RecordingState.Paused
-    val isBusy = recordingState is RecordingState.Stopping ||
-            recordingState is RecordingState.Countdown
+    val isIdle = recordingState is RecordingState.Idle
+            || recordingState is RecordingState.Saved
+            || recordingState is RecordingState.Error
+    val isRecording = recordingState is RecordingState.Recording
+            || recordingState is RecordingState.Paused
+    val isBusy = recordingState is RecordingState.Stopping
+            || recordingState is RecordingState.RequestingPermission
+
+    val buttonScale by animateFloatAsState(
+        targetValue = if (isRecording) 0.92f else 1f,
+        animationSpec = tween(200),
+        label = "button_scale"
+    )
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(148.dp),
+        modifier = Modifier.size(130.dp),
         contentAlignment = Alignment.Center
     ) {
+        // Outer ring
+        Box(
+            modifier = Modifier
+                .size(130.dp)
+                .clip(CircleShape)
+                .border(
+                    width = 3.dp,
+                    color = when {
+                        isRecording -> MaterialTheme.colorScheme.error.copy(alpha = 0.3f)
+                        isBusy      -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        else        -> MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                    },
+                    shape = CircleShape
+                )
+        )
+
         if (isBusy) {
-            CircularProgressIndicator(modifier = Modifier.size(64.dp), strokeWidth = 4.dp)
+            CircularProgressIndicator(
+                modifier = Modifier.size(56.dp),
+                strokeWidth = 4.dp,
+                color = MaterialTheme.colorScheme.primary
+            )
         }
 
-        AnimatedVisibility(visible = isIdle, enter = fadeIn(), exit = fadeOut()) {
+        AnimatedVisibility(
+            visible = isIdle,
+            enter = scaleIn(tween(200)) + fadeIn(),
+            exit = scaleOut(tween(150)) + fadeOut()
+        ) {
             Box(
                 modifier = Modifier
-                    .size(120.dp)
+                    .size(100.dp)
+                    .scale(buttonScale)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary)
                     .clickable(onClick = onStart),
@@ -368,16 +480,21 @@ fun ActionArea(
                     Icons.Rounded.FiberManualRecord,
                     contentDescription = "Start Recording",
                     tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(44.dp)
                 )
             }
         }
 
-        AnimatedVisibility(visible = isActiveRecording, enter = fadeIn(), exit = fadeOut()) {
+        AnimatedVisibility(
+            visible = isRecording,
+            enter = scaleIn(tween(200)) + fadeIn(),
+            exit = scaleOut(tween(150)) + fadeOut()
+        ) {
             Box(
                 modifier = Modifier
-                    .size(120.dp)
-                    .clip(RoundedCornerShape(32.dp))
+                    .size(100.dp)
+                    .scale(buttonScale)
+                    .clip(RoundedCornerShape(28.dp))
                     .background(MaterialTheme.colorScheme.error)
                     .clickable(onClick = onStop),
                 contentAlignment = Alignment.Center
@@ -386,95 +503,110 @@ fun ActionArea(
                     Icons.Rounded.Stop,
                     contentDescription = "Stop Recording",
                     tint = MaterialTheme.colorScheme.onError,
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(44.dp)
                 )
             }
+        }
+    }
+}
+
+// ── 2×2 Preset grid ──
+@Composable
+private fun PresetGrid(
+    prefs: UserPreferences,
+    onEdit: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            PresetCard(
+                icon = Icons.Outlined.AspectRatio,
+                label = "Resolution",
+                value = prefs.resolution,
+                onClick = { onEdit("resolution") },
+                modifier = Modifier.weight(1f)
+            )
+            PresetCard(
+                icon = Icons.Outlined.Speed,
+                label = "Frame Rate",
+                value = "${prefs.fps} FPS",
+                onClick = { onEdit("fps") },
+                modifier = Modifier.weight(1f)
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            PresetCard(
+                icon = Icons.Outlined.HighQuality,
+                label = "Quality",
+                value = prefs.quality,
+                onClick = { onEdit("quality") },
+                modifier = Modifier.weight(1f)
+            )
+            PresetCard(
+                icon = Icons.Outlined.Mic,
+                label = "Audio",
+                value = when (prefs.audioSource) {
+                    "No audio"         -> "None"
+                    "Phone microphone" -> "Microphone"
+                    "Internal audio"   -> "Internal"
+                    else               -> prefs.audioSource
+                },
+                onClick = { onEdit("audio") },
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
 
 @Composable
-fun ConfigCard(uiState: UserPreferences?, onChipClick: (String) -> Unit) {
+private fun PresetCard(
+    icon: ImageVector,
+    label: String,
+    value: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier
+            .height(96.dp)
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                "Current Preset",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(22.dp)
             )
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                AssistChip(
-                    onClick = { onChipClick("resolution") },
-                    label = { Text(uiState?.resolution ?: "1080p") },
-                    leadingIcon = {
-                        Icon(Icons.Default.AspectRatio, null, modifier = Modifier.size(16.dp))
-                    },
-                    modifier = Modifier.weight(1f)
+            Column {
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium
                 )
-                AssistChip(
-                    onClick = { onChipClick("fps") },
-                    label = { Text("${uiState?.fps ?: 30} FPS") },
-                    leadingIcon = {
-                        Icon(Icons.Default.Speed, null, modifier = Modifier.size(16.dp))
-                    },
-                    modifier = Modifier.weight(1f)
+                Text(
+                    value,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
-            Spacer(modifier = Modifier.height(6.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                AssistChip(
-                    onClick = { onChipClick("quality") },
-                    label = { Text(uiState?.quality ?: "Balanced") },
-                    leadingIcon = {
-                        Icon(Icons.Default.HighQuality, null, modifier = Modifier.size(16.dp))
-                    },
-                    modifier = Modifier.weight(1f)
-                )
-                AssistChip(
-                    onClick = { onChipClick("audio") },
-                    label = {
-                        Text(
-                            when (uiState?.audioSource) {
-                                "Phone microphone" -> "Mic"
-                                "No audio" -> "No audio"
-                                "Internal audio" -> "Internal"
-                                else -> uiState?.audioSource ?: "No audio"
-                            }
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(Icons.Default.Mic, null, modifier = Modifier.size(16.dp))
-                    },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            Spacer(modifier = Modifier.height(6.dp))
-            AssistChip(
-                onClick = { onChipClick("countdown") },
-                label = {
-                    val cd = uiState?.countdown ?: 0
-                    Text(if (cd == 0) "No countdown" else "Countdown ${cd}s")
-                },
-                leadingIcon = {
-                    Icon(Icons.Default.Timer, null, modifier = Modifier.size(16.dp))
-                }
-            )
         }
     }
 }
 
+// ── Quick-edit bottom sheet ──
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuickEditSheet(
@@ -491,19 +623,19 @@ fun QuickEditSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 40.dp)
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 44.dp)
         ) {
             when (chipType) {
                 "resolution" -> {
                     SheetHeader("Resolution")
                     listOf(
-                        Triple("720p", "HD — smaller files, less battery drain", true),
-                        Triple("1080p", "Full HD — recommended balance", true),
-                        Triple("1440p", "QHD — sharp, larger files", true),
-                        Triple("Native", "Use device native resolution", true)
-                    ).forEach { (label, desc, enabled) ->
-                        OptionRow(label, desc, currentPrefs?.resolution == label, enabled) {
+                        "720p"   to "HD · Smaller files, less battery drain",
+                        "1080p"  to "Full HD · Recommended balance",
+                        "1440p"  to "QHD · Sharp, larger files",
+                        "Native" to "Device native · Exact screen size"
+                    ).forEach { (label, desc) ->
+                        SheetOptionRow(label, desc, currentPrefs?.resolution == label) {
                             onSelectResolution(label)
                         }
                     }
@@ -511,12 +643,12 @@ fun QuickEditSheet(
                 "fps" -> {
                     SheetHeader("Frame Rate")
                     listOf(
-                        Triple(30, "Standard — most compatible", true),
-                        Triple(60, "Smooth — good for tutorials/demos", true),
-                        Triple(90, "High — uses more CPU/battery", true),
-                        Triple(120, "Very high — may not work on all devices", true)
-                    ).forEach { (value, desc, enabled) ->
-                        OptionRow("$value FPS", desc, currentPrefs?.fps == value, enabled) {
+                        30  to "Standard · Compatible with all devices",
+                        60  to "Smooth · Great for demos and tutorials",
+                        90  to "High · Uses more CPU/battery",
+                        120 to "Very high · May not work on all devices"
+                    ).forEach { (value, desc) ->
+                        SheetOptionRow("$value FPS", desc, currentPrefs?.fps == value) {
                             onSelectFps(value)
                         }
                     }
@@ -524,39 +656,42 @@ fun QuickEditSheet(
                 "quality" -> {
                     SheetHeader("Quality")
                     listOf(
-                        "Low" to "Smallest files, lower detail",
-                        "Balanced" to "Good quality, reasonable size",
-                        "High" to "Great quality for sharing",
-                        "Max" to "Best quality, largest files"
+                        "Low"      to "Smallest files, lower detail",
+                        "Balanced" to "Good quality, moderate file size",
+                        "High"     to "Great quality for sharing",
+                        "Max"      to "Best quality, largest files"
                     ).forEach { (label, desc) ->
-                        OptionRow(label, desc, currentPrefs?.quality == label, true) {
+                        SheetOptionRow(label, desc, currentPrefs?.quality == label) {
                             onSelectQuality(label)
                         }
                     }
                 }
                 "audio" -> {
                     SheetHeader("Audio Source")
-                    OptionRow("No audio", "Record screen only, no sound",
-                        currentPrefs?.audioSource == "No audio", true) { onSelectAudio("No audio") }
-                    OptionRow("Phone microphone", "Record your voice and ambient sound",
-                        currentPrefs?.audioSource == "Phone microphone", true) { onSelectAudio("Phone microphone") }
-                    OptionRow(
+                    SheetOptionRow("No audio", "Record screen only",
+                        currentPrefs?.audioSource == "No audio") { onSelectAudio("No audio") }
+                    SheetOptionRow("Phone microphone", "Record your voice",
+                        currentPrefs?.audioSource == "Phone microphone") { onSelectAudio("Phone microphone") }
+                    SheetOptionRow(
                         "Internal audio",
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
-                            "App audio — requires Android 10+ (coming soon)"
-                        else
-                            "Not available on Android 8/9",
-                        false, false
+                            "App audio · Coming soon" else "Not available on Android 8/9",
+                        selected = false,
+                        enabled = false
                     ) {}
                 }
                 "countdown" -> {
                     SheetHeader("Countdown")
-                    listOf(0, 3, 5, 10).forEach { value ->
-                        OptionRow(
+                    listOf(
+                        0  to "Start immediately",
+                        3  to "3 seconds — good default",
+                        5  to "5 seconds",
+                        10 to "10 seconds"
+                    ).forEach { (value, desc) ->
+                        SheetOptionRow(
                             if (value == 0) "No countdown" else "${value}s",
-                            if (value == 0) "Start recording immediately" else "Wait $value seconds before recording",
-                            currentPrefs?.countdown == value,
-                            true
+                            desc,
+                            currentPrefs?.countdown == value
                         ) { onSelectCountdown(value) }
                     }
                 }
@@ -568,11 +703,11 @@ fun QuickEditSheet(
 @Composable
 fun SheetHeader(title: String) {
     Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(12.dp))
 }
 
 @Composable
-fun OptionRow(
+fun SheetOptionRow(
     label: String,
     description: String,
     selected: Boolean,
@@ -584,39 +719,36 @@ fun OptionRow(
             .fillMaxWidth()
             .padding(vertical = 3.dp)
             .clickable(enabled = enabled, onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
             containerColor = when {
                 selected -> MaterialTheme.colorScheme.primaryContainer
-                else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                else     -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             }
         )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            RadioButton(
-                selected = selected,
-                onClick = if (enabled) onClick else null
-            )
-            Spacer(modifier = Modifier.width(12.dp))
+            RadioButton(selected = selected, onClick = if (enabled) onClick else null)
+            Spacer(modifier = Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     label,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                     color = if (enabled) MaterialTheme.colorScheme.onSurface
-                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                 )
                 if (description.isNotEmpty()) {
                     Text(
                         description,
                         style = MaterialTheme.typography.bodySmall,
                         color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
-                        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
                     )
                 }
             }

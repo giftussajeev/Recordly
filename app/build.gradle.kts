@@ -11,8 +11,8 @@ android {
         applicationId = "com.recordly.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "1.4"
+        versionCode = 6
+        versionName = "1.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -27,6 +27,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        debug {
+            // Universal debug — no ABI splits, no minification
+            isMinifyEnabled = false
         }
     }
     compileOptions {
@@ -67,7 +71,7 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("io.coil-kt:coil-video:2.6.0")
 
-    // Icons
+    // Icons extended
     implementation("androidx.compose.material:material-icons-extended")
 
     testImplementation("junit:junit:4.13.2")

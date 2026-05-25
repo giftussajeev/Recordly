@@ -14,22 +14,34 @@ import com.recordly.app.ui.navigation.RecordlyNavGraph
 import com.recordly.app.ui.theme.RecordlyTheme
 import kotlinx.coroutines.flow.map
 
+/**
+ * MainActivity — single-activity host.
+ *
+ * Theme preferences (theme name + dynamicColor) are read from DataStore here,
+ * at the top of the Compose tree, so RecordlyTheme recomposes correctly when
+ * the user changes theme in Settings.
+ *
+ * This is the single source of truth for theme: DataStore → MainActivity →
+ * RecordlyTheme → MaterialTheme → all composables.
+ */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Edge-to-edge: let Compose handle insets
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         val appContainer = (application as RecordlyApplication).container
 
         setContent {
+            // Read theme from DataStore — updates RecordlyTheme reactively on change
             val themePreference by appContainer.preferencesRepository.userPreferencesFlow
                 .map { it.theme }
                 .collectAsState(initial = "System")
 
             val dynamicColor by appContainer.preferencesRepository.userPreferencesFlow
                 .map { it.dynamicColor }
-                .collectAsState(initial = true)
+                .collectAsState(initial = false)
 
             RecordlyTheme(
                 themePreference = themePreference,

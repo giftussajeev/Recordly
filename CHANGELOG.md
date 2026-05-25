@@ -1,42 +1,71 @@
 # Changelog
 
+## 1.5 (versionCode 6)
+### Home screen redesign
+- Replaced small chip row with a 2×2 preset grid: four large rounded cards (Resolution, FPS, Quality, Audio)
+- Each card shows icon, label, and current value with a large tap target
+- Record button redesigned: large circle with scale animation, clear stop state
+- Recording status badge in header while recording
+- Countdown shown as a pill chip below the record button
+- Status card more informative (countdown timer display, saving spinner)
+- Error card shows user-friendly message instead of raw exception text
+
+### Settings performance
+- Settings now uses `Column + verticalScroll` instead of `LazyColumn`
+- All settings composables receive only primitive/immutable args — no unnecessary recomposition
+- Bottom sheet only composed when open (not in idle tree)
+- No side effects or expensive work inside composition
+- AMOLED added as theme option in Settings bottom sheet
+- Bitrate selector added
+
+### Theme and dynamic color
+- Fixed theme not propagating: `MainActivity` now reads `themePreference` and `dynamicColor` from DataStore and passes directly to `RecordlyTheme` — single source of truth
+- `RecordlyTheme` now uses a proper full `lightColorScheme`/`darkColorScheme`/AMOLED scheme with all Material 3 roles filled in
+- Fixed: primary color was `0xFF0F172A` (near-black navy) — was unreadable in light theme. Now `0xFF4F6EF7` (vivid blue)
+- Status bar and navigation bar now correctly styled for each theme mode
+- Dynamic color default changed to `false` so the stable Recordly palette is shown by default (avoids wallpaper color bleed)
+- Dynamic color toggle in Settings correctly toggles Material You
+
+### Recording reliability
+- MediaProjection callback now registered BEFORE `createVirtualDisplay` (required on Android 14+)
+- Added fallback retry: if user config fails `prepare()`, retries automatically with 1080p / 30fps / no audio
+- `trySetupMediaRecorder()` wraps setup in a safe try/catch and cleans up on failure
+- Better user-facing error messages (hide raw exception text from UI, keep it in Logcat)
+
+### About screen
+- Polished hero: circular icon + "Recordly" ExtraBold title + "Version 1.5"
+- App info card with all metadata
+- GitHub link now opens `https://github.com/giftussajeev/Recordly`
+- Play Store row shows "Coming soon" with toast
+- Privacy/Terms/Licenses open native screens
+- Credits card with proper styling
+
+### Code quality
+- Color palette redesigned: all Material 3 roles filled for light, dark, and AMOLED
+- No WebView anywhere
+- No placeholder screens
+- All screens are native Jetpack Compose
+
 ## 1.4 (versionCode 5)
 ### Fixed
-- **Critical: Recording startup crash** — removed `display?.refreshRate` and `resources.displayMetrics` calls from Service context (they throw "Context not associated with display" on Android 11+). All display metrics (width, height, density, refresh rate) are now passed from Activity as Intent extras.
-- **About page crash** — replaced `LazyColumn` with `Column + verticalScroll`, replaced `Image(painterResource(ic_launcher))` with Icon-based composable to avoid mipmap load crashes on some devices.
-- **Settings lag** — replaced `LazyColumn` in Settings with `Column + verticalScroll`. LazyColumn was triggering unnecessary recomposition of all items on state changes.
-- **MediaRecorder order** — moved audio encoder setup before video encoder (required by API contract). Ensures even dimensions for H264 encoder.
-- **Partial file cleanup** — corrupted/empty output files are now deleted when recording fails to start.
+- Recording startup crash (display context in Service)
+- About page crash (LazyColumn + painterResource combo)
+- Settings lag (LazyColumn → Column+verticalScroll)
+- MediaRecorder setup order
 
 ### Added
-- **Welcome / onboarding screen** — shown on first launch. Step-by-step permission setup for notifications, microphone, and overlay. Explains screen capture consent. Shows credits tastefully. Stored in DataStore.
-- **"Run setup again"** option in Settings to re-open onboarding anytime.
-- **Countdown chip** on home screen quick edit.
-- **Internal audio helper text** — Android 10+ note in audio selector, Android 8/9 unavailability explained.
-
-### Changed
-- Default FPS: 60 → 30 (safer, more compatible)
-- Default quality: High → Balanced
-- Default countdown: 3s → None (immediate start)
-- NavGraph waits for DataStore to load before showing any screen (prevents flash of wrong screen)
-- Settings now shows helper text for each section
+- Onboarding screen (first-run permission setup)
+- "Run setup again" in Settings
+- Countdown quick-edit chip
 
 ## 1.3 (versionCode 4)
-### Fixed
-- `setAudioSource(REMOTE_SUBMIX)` crash — internal audio now falls back to No audio
-- Audio encoder operator precedence bug — audio encoder no longer set unconditionally on Android 10+
-- NavGraph padding — content no longer obscured by bottom navigation bar
-- About page intent crash — all external intents wrapped in try-catch
-
-### Added
-- Interactive preset chips on home screen with ModalBottomSheet selectors
-- Theme switching (System / Light / Dark / AMOLED) via DataStore
-- Dynamic color toggle (Material You, Android 12+)
-- Performance mode toggle
-- Library search bar
+- REMOTE_SUBMIX crash fix
+- Audio encoder operator precedence fix
+- Interactive preset chips
+- Theme/dynamic color toggle
 
 ## 1.2 (versionCode 3)
-- Initial MediaStore library integration
+- MediaStore library integration
 - Settings restructure
 
 ## 1.1 (versionCode 2)

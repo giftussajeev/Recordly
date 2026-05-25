@@ -28,14 +28,14 @@ class PreferencesRepository(private val context: Context) {
     val userPreferencesFlow: Flow<UserPreferences> = context.dataStore.data.map { prefs ->
         UserPreferences(
             resolution = prefs[RESOLUTION] ?: "1080p",
-            fps = prefs[FPS] ?: 60,
-            quality = prefs[QUALITY] ?: "High",
+            fps = prefs[FPS] ?: 30,
+            quality = prefs[QUALITY] ?: "Balanced",
             bitrate = prefs[BITRATE] ?: "Auto",
-            countdown = prefs[COUNTDOWN] ?: 3,
+            countdown = prefs[COUNTDOWN] ?: 0,
             audioSource = prefs[AUDIO_SOURCE] ?: "No audio",
             floatingControls = prefs[FLOATING_CONTROLS] ?: true,
             theme = prefs[THEME] ?: "System",
-            dynamicColor = prefs[DYNAMIC_COLOR] ?: true,
+            dynamicColor = prefs[DYNAMIC_COLOR] ?: false,
             onboardingComplete = prefs[ONBOARDING_COMPLETE] ?: false,
             performanceMode = prefs[PERFORMANCE_MODE] ?: false
         )

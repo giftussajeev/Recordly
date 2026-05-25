@@ -9,7 +9,7 @@ data class UserPreferences(
     val audioSource: String = "No audio",  // default no audio — avoids mic permission flow on first run
     val floatingControls: Boolean = true,
     val theme: String = "System",
-    val dynamicColor: Boolean = true,
+    val dynamicColor: Boolean = false,   // off by default — use stable Recordly palette
     val onboardingComplete: Boolean = false,
     val performanceMode: Boolean = false
 )

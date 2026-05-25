@@ -215,7 +215,7 @@ class RecordingService : Service() {
             Log.d(TAG, "MediaProjection acquired")
 
             // Resolve safe audio source
-            val resolvedAudio = resolveAudioSource(audioSource)
+        val resolvedAudio = resolveAudioSource(audioSource)
             Log.d(TAG, "Audio: '$audioSource' -> '$resolvedAudio'")
 
             // Calculate actual recording dimensions from the passed screen info
@@ -228,7 +228,33 @@ class RecordingService : Service() {
             val targetFps = fps.coerceAtMost(screenRefreshRate.toInt()).coerceAtLeast(15)
             Log.d(TAG, "Target FPS: $targetFps (requested=$fps, display=${screenRefreshRate}Hz)")
 
-            setupMediaRecorder(resolvedAudio, bitrateConfig, recWidth, recHeight, targetFps)
+            // Register callback BEFORE createVirtualDisplay (Android 14+ requirement)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                mediaProjection?.registerCallback(object : MediaProjection.Callback() {
+                    override fun onStop() {
+                        Log.d(TAG, "MediaProjection stopped by system")
+                        if (_recordingState.value is RecordingState.Recording ||
+                            _recordingState.value is RecordingState.Paused) {
+                            stopRecordingSafely(isError = false, message = null)
+                        }
+                    }
+                }, null)
+            }
+
+            // Try with user config first, fall back to safe defaults on failure
+            val prepared = trySetupMediaRecorder(
+                resolvedAudio, bitrateConfig, recWidth, recHeight, targetFps
+            ) ?: run {
+                Log.w(TAG, "Primary config failed, retrying with safe fallback (1080p, 30fps, no audio)")
+                val (fbW, fbH) = resolveRecordingDimensions("1080p", screenWidth, screenHeight)
+                trySetupMediaRecorder("No audio", "Auto", fbW, fbH, 30)
+            }
+
+            if (prepared == null) {
+                Log.e(TAG, "MediaRecorder prepare failed with all configs")
+                stopRecordingSafely(true, "Recording setup failed. Try lower resolution or restart the app.")
+                return
+            }
 
             virtualDisplay = mediaProjection?.createVirtualDisplay(
                 "RecordlyDisplay",
@@ -311,6 +337,29 @@ class RecordingService : Service() {
         val w = if (landscape) longSide else shortSide
         val h = if (landscape) shortSide else longSide
         return Pair(w, h)
+    }
+
+    /**
+     * Tries to set up the MediaRecorder with the given config.
+     * Returns the MediaRecorder on success, null on failure.
+     * On failure, cleans up the recorder so it can be re-created.
+     */
+    private fun trySetupMediaRecorder(
+        audioSource: String,
+        bitrateConfig: String,
+        width: Int,
+        height: Int,
+        fps: Int
+    ): MediaRecorder? {
+        return try {
+            setupMediaRecorder(audioSource, bitrateConfig, width, height, fps)
+            mediaRecorder
+        } catch (e: Exception) {
+            Log.e(TAG, "setupMediaRecorder failed: ${e.message}")
+            try { mediaRecorder?.reset(); mediaRecorder?.release() } catch (_: Exception) {}
+            mediaRecorder = null
+            null
+        }
     }
 
     private fun setupMediaRecorder(
