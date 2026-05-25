@@ -1,94 +1,76 @@
-# Recordly 1.9
+# Recordly
 
-A beautiful, lightweight, privacy-first screen recorder for Android. Built natively with Kotlin and Jetpack Compose.
+[![Latest Release](https://img.shields.io/github/v/release/giftussajeev/Recordly?color=brightgreen&label=release&logo=github)](https://github.com/giftussajeev/Recordly/releases/latest)
+[![Platform](https://img.shields.io/badge/Platform-Android%208.0%2B%20%28API%2026%2B%29-orange?logo=android)](https://developer.android.com)
+[![License](https://img.shields.io/github/license/giftussajeev/Recordly?color=blue)](LICENSE)
 
-No ads. No analytics. No internet needed. Everything stays on your device.
+A native, lightweight, and privacy-focused screen recorder for Android. Built with Jetpack Compose, Material 3, and Kotlin. 
 
-**[⬇ Download latest APK (v1.9)](https://github.com/giftussajeev/Recordly/releases/latest)**
-
-> Enable "Install unknown apps" in Android settings to sideload.
-
----
-
-## What's in v1.9
-
-**Recording actually works now** — rewrote the entire recording pipeline. Files are now properly saved via MediaStore on Android 10+ (no more lost recordings). Auto-fallback to safe defaults if your chosen config fails.
-
-**Internal audio** — enabled for Android 10+. Uses MIC source with active MediaProjection for app audio capture. Properly disabled with a clear message on Android 8-9.
-
-**Quality replaces Bitrate** — removed the redundant Bitrate setting. Quality presets (Low/Balanced/High/Max) now intelligently map to the right bitrate based on your resolution and FPS.
-
-**Match display FPS** — new option that records at your screen's native refresh rate (60Hz, 90Hz, 120Hz, etc.).
-
-**Library works** — fixed MediaStore queries that were failing silently. Recordings now show up immediately after saving.
-
-**Record button is red** — uses Google Material Red, not the theme primary color. Consistent with what users expect from a record button.
-
-**Cleaned up Settings** — removed fake/broken features (Performance Mode, Show Touches). Every setting that exists actually works.
-
-**About screen polished** — shows actual Recordly app icon, expandable Android compatibility section, centered credits.
-
-**Telegram-style theme switching** — changing themes now plays a circular reveal animation that expands from the top-right corner, revealing the new theme underneath. Like Telegram.
-
-**Floating overlay auto-collapse** — the recording overlay collapses to a small dot + timer after 4 seconds of no interaction. Tap to expand. Unobtrusive in games and fullscreen apps.
+Recordly does not contain ads, analytics, or trackers. All screen and audio recordings are processed and saved entirely on your device with no network permissions required.
 
 ---
 
-## Supports
-
-| Android version | Supported |
-|-----------------|-----------|
-| Android 8.0 (API 26) | ✅ |
-| Android 9.0 (API 28) | ✅ |
-| Android 10+ (API 29) | ✅ Internal audio |
-| Android 12+ Material You | ✅ Dynamic colors |
-| Android 14+ (API 34) | ✅ |
-| Android 15/16 (API 35) | ✅ |
+<p align="center">
+  <a href="https://github.com/giftussajeev/Recordly/releases/latest">
+    <img src="https://img.shields.io/badge/Download-Latest%20APK-success?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" />
+  </a>
+</p>
 
 ---
 
-## Features
+## Key Features
 
-- Screen recording to MP4
-- Resolution: 720p / 1080p / 1440p / Native
-- FPS: Match display / 30 / 60 / 90 / 120 (capped to display refresh rate)
-- Quality: Low / Balanced / High / Max (auto-maps to bitrate)
-- Audio: None / Microphone / Internal (Android 10+)
-- Floating overlay with stop/pause/timer while recording
-- Library with search, multi-select, share, rename, delete
-- Theme: System / Light / Dark / AMOLED
-- Material You dynamic colors (Android 12+)
-- Custom save location via SAF
-- Recordings saved to `Movies/Recordly`
+* **High-Performance Screen Capture**: Full support for native resolutions up to 1440p (QHD) and dynamic display resolution scaling.
+* **Intelligent Quality Presets**: Select from Low, Balanced, High, and Max presets. The video pipeline automatically computes and configures the optimal target bitrate based on the chosen resolution and frame rate.
+* **Match Display Refresh Rate**: Toggle a "Match display" frame-rate option (`fps = -1`) to record content smoothly at your screen's native refresh rate (e.g., 90Hz, 120Hz).
+* **Flexible Audio Input**: Supports both high-fidelity microphone capture and native internal audio loopback capture (available on Android 10+).
+* **System Overlay Controls**: An active floating widget provides quick access to pause, resume, and stop recording without switching away from your current app. To prevent screen clutter, the overlay automatically collapses into a subtle timer dot after 4 seconds of inactivity.
+* **Telegram-Style Animated Theme Engine**: A premium UI transition effect that captures your current screen state and applies a circular reveal wipe animation when switching between Light, Dark, System, and true-black AMOLED theme modes.
+* **In-App Library Manager**: Clean Jetpack Compose gallery list with instant search, multi-select, batch sharing, direct file renaming, and batch deletion.
+* **Flexible Save Configurations**: Saves locally to standard scoped storage (`Movies/Recordly`) by default, with complete Storage Access Framework (SAF) tree picker integration for custom directories.
 
----
+## Supported Android Versions
 
-## Build from source
+| Android Version | API Level | Scoped Storage | Internal Audio | Theme Style |
+|:---|:---:|:---:|:---:|:---:|
+| **Android 8.0 - 9.0** (Oreo, Pie) | 26 - 28 | Legacy | ❌ | Material 3 (Static) |
+| **Android 10 - 11** (Q, R) | 29 - 30 | Scoped | ✅ | Material 3 (Static) |
+| **Android 12+** (S, T, U, V) | 31+ | Scoped | ✅ | Material You (Dynamic) |
+
+## Development & Building
+
+The project is structured as a standard single-module Android app and compiles using Java 17.
+
+### Prerequisites
+* Android Studio (Koala or later recommended)
+* Android SDK (API 35 target)
+* JDK 17
+
+### Building from the Command Line
+Clone the repository and run the Gradle wrapper:
 
 ```bash
 # Windows
-set JAVA_HOME=C:\Program Files\Android\Android Studio\jbr
 .\gradlew.bat :app:assembleDebug
 
-# macOS/Linux
+# Linux / macOS
+chmod +x gradlew
 ./gradlew :app:assembleDebug
 ```
 
-Install to a connected device:
+After building, the debug package is located under `app/build/outputs/apk/debug/app-debug.apk`.
+
+### Sideloading
+Install the APK on an active ADB-authorized device:
 ```bash
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
----
+## Contributors
 
-## Credits
-
-Vibecoded with love by Giftus Sajeev and Sanjith KS.
-
-Made with GPT-5.5 Extended, Gemini 3.1 Pro High, Claude Opus 4.7, and Google Stitch v3.
-
----
+* **Giftus Sajeev**
+* **Sanjith KS**
 
 ## License
 
-Apache License 2.0. See [LICENSE](LICENSE).
+Recordly is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for details.
