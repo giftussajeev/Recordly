@@ -21,20 +21,18 @@ It does not contain ads, trackers, or analytics. It works fully offline with no 
 ## Screenshots
 
 <p align="center">
-  <img src="assets/dashboard.png" width="280" alt="Dashboard Screen" />
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="assets/library.png" width="280" alt="Library Screen" />
+  <img src="assets/dashboard.png" width="300" alt="Dashboard Screen" />
 </p>
 
 ## Features
 
-* **High-Performance Screen Capture**: Records up to 1440p (QHD) matching the native orientation and aspect ratio.
-* **Match Display Refresh Rate**: Optionally record at your screen's native refresh rate (e.g. 90Hz, 120Hz).
-* **Flexible Audio Input**: Choose between high-fidelity microphone recording or native internal audio capture (Android 10+).
-* **Smart Quality Presets**: Select from Low, Balanced, High, or Max quality presets (automatically configures bitrates).
-* **Auto-Collapse Overlay**: A draggable floating overlay for quick controls that collapses into a tiny timer dot after 4 seconds of inactivity.
-* **Telegram-Style Theme Switching**: Changing themes (Light, Dark, System, AMOLED) triggers a premium circular reveal animation.
-* **In-App Library Manager**: Built-in player and organizer with search, renaming, multi-select, and batch share/delete.
+* **Screen Recording**: Record screen up to 1440p (QHD) matching your device's native orientation.
+* **Audio Capture**: Record microphone audio or capture internal device audio natively (Android 10+).
+* **Smart Bitrate**: Quality presets (Low, Balanced, High, Max) automatically map to the right bitrate based on your resolution and FPS.
+* **Match Screen Refresh Rate**: Record up to 120 FPS by locking the frame rate to your device's refresh rate.
+* **Auto-Collapse Overlay**: Draggable floating bubble for quick controls that automatically collapses to a small timer dot after 4 seconds of inactivity.
+* **Telegram-Style Themes**: Switching themes (Light, Dark, System, AMOLED) triggers a premium circular reveal animation expanding from the top-right corner.
+* **Built-in Library**: Manage recordings with search, renaming, multi-select, and batch share/delete.
 * **Custom Save Location**: Saves to `Movies/Recordly` by default, or you can pick any custom directory via SAF.
 
 ## Compatibility
@@ -59,10 +57,11 @@ chmod +x gradlew && ./gradlew :app:assembleDebug
 
 The compiled APK will be located under `app/build/outputs/apk/debug/app-debug.apk`.
 
-## Contributors
+## Credits
 
-* **Giftus Sajeev**
-* **Sanjith KS**
+* **Giftus Sajeev** (Lead Developer)
+* **Sanjith KS** (Developer)
+* **AI Collaborators**: GPT-5.5 Extended, Gemini 3.1 Pro High, Claude Opus 4.7, and Google Stitch v3.
 
 ## License
 
