@@ -60,7 +60,7 @@ The compiled APK will be located under `app/build/outputs/apk/debug/app-debug.ap
 ## Credits
 
 * **Giftus Sajeev** (Lead Developer)
-* **Sanjith KS** (Developer)
+* **Sanjith KS** (UAT Tester)
 * **AIs Used**: GPT-5.5 Extended, Gemini 3.1 Pro High, Gemini 3.5 Flash High, Claude Opus 4.7, and Google Stitch v3.
 
 ## License
