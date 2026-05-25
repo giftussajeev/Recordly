@@ -26,22 +26,22 @@ It does not contain ads, trackers, or analytics. It works fully offline with no 
 
 ## Features
 
-* **Screen Recording**: Record screen up to 1440p (QHD) matching your device's native orientation.
-* **Audio Capture**: Record microphone audio or capture internal device audio natively (Android 10+).
-* **Smart Bitrate**: Quality presets (Low, Balanced, High, Max) automatically map to the right bitrate based on your resolution and FPS.
-* **Match Screen Refresh Rate**: Record up to 120 FPS by locking the frame rate to your device's refresh rate.
-* **Auto-Collapse Overlay**: Draggable floating bubble for quick controls that automatically collapses to a small timer dot after 4 seconds of inactivity.
-* **Telegram-Style Themes**: Switching themes (Light, Dark, System, AMOLED) triggers a premium circular reveal animation expanding from the top-right corner.
-* **Built-in Library**: Manage recordings with search, renaming, multi-select, and batch share/delete.
-* **Custom Save Location**: Saves to `Movies/Recordly` by default, or you can pick any custom directory via SAF.
+* **High-Resolution Recording**: Support for screen capture up to 1440p (QHD) matching device orientation and aspect ratio.
+* **Audio Sources**: Captures microphone audio or system audio natively on supported Android versions.
+* **Optimized Encoding**: Intelligently configures encoding bitrates based on your selected resolution, frame rate, and quality presets (Low, Balanced, High, Max).
+* **Refresh Rate Matching**: Lock recordings to your screen's refresh rate for up to 120 FPS capture.
+* **Smart Floating Control**: Draggable overlay bubble with quick stop and pause options that automatically collapses into a subtle timer dot after 4 seconds of inactivity.
+* **Seamless Theming**: Smooth animated theme transitions supporting System, Light, Dark, and true black AMOLED modes.
+* **Local Library Manager**: Gallery view with local search, file renaming, multi-select, sharing, and batch deletion.
+* **Custom Storage**: Saves directly to your Movies folder by default, with support for custom directory selection via Storage Access Framework (SAF).
 
 ## Compatibility
 
-| OS Version | API | Scoped Storage | Internal Audio | Theme Style |
+| Android Version | API Level | Storage Model | Internal Audio | Theme Engine |
 |:---|:---:|:---:|:---:|:---:|
-| **Android 8.0 - 9.0** | 26 - 28 | Legacy | ❌ | Material 3 (Static) |
-| **Android 10 - 11** | 29 - 30 | Scoped | ✅ | Material 3 (Static) |
-| **Android 12+** | 31+ | Scoped | ✅ | Material You (Dynamic) |
+| **Android 8.0 - 9.0** | 26 - 28 | Legacy Storage | Supported via Mic fallback | Material 3 (Static) |
+| **Android 10 - 11** | 29 - 30 | Scoped Storage | Native API Supported | Material 3 (Static) |
+| **Android 12+** | 31+ | Scoped Storage | Native API Supported | Material You (Dynamic) |
 
 ## Building from source
 
