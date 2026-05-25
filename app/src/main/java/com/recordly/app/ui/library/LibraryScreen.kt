@@ -2,8 +2,10 @@ package com.recordly.app.ui.library
 
 import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -34,8 +36,11 @@ import java.util.concurrent.TimeUnit
 fun LibraryScreen(viewModel: LibraryViewModel) {
     val recordings by viewModel.recordings.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val selectedIds by viewModel.selectedRecordingIds.collectAsState()
     val context = LocalContext.current
     var showSearch by remember { mutableStateOf(false) }
+    
+    val inSelectionMode = selectedIds.isNotEmpty()
 
     val imageLoader = remember {
         ImageLoader.Builder(context)
@@ -59,16 +64,43 @@ fun LibraryScreen(viewModel: LibraryViewModel) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Library", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            Row {
-                IconButton(onClick = { viewModel.refresh() }) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+            if (inSelectionMode) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = { viewModel.clearSelection() }) {
+                        Icon(Icons.Default.Close, contentDescription = "Clear selection")
+                    }
+                    Text("${selectedIds.size} selected", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 }
-                IconButton(onClick = { showSearch = !showSearch; if (!showSearch) viewModel.updateSearchQuery("") }) {
-                    Icon(
-                        if (showSearch) Icons.Default.Close else Icons.Default.Search,
-                        contentDescription = "Search"
-                    )
+                Row {
+                    IconButton(onClick = {
+                        val uris = recordings.filter { it.id in selectedIds }.map { it.uri }
+                        val shareIntent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+                            type = "video/mp4"
+                            putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
+                            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        }
+                        try {
+                            context.startActivity(Intent.createChooser(shareIntent, "Share recordings"))
+                        } catch (_: Exception) {}
+                    }) {
+                        Icon(Icons.Default.Share, contentDescription = "Share selected")
+                    }
+                    IconButton(onClick = { viewModel.deleteSelected() }) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete selected")
+                    }
+                }
+            } else {
+                Text("Library", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                Row {
+                    IconButton(onClick = { viewModel.refresh() }) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                    }
+                    IconButton(onClick = { showSearch = !showSearch; if (!showSearch) viewModel.updateSearchQuery("") }) {
+                        Icon(
+                            if (showSearch) Icons.Default.Close else Icons.Default.Search,
+                            contentDescription = "Search"
+                        )
+                    }
                 }
             }
         }
@@ -102,14 +134,23 @@ fun LibraryScreen(viewModel: LibraryViewModel) {
                     RecordingCard(
                         recording = recording,
                         imageLoader = imageLoader,
+                        isSelected = selectedIds.contains(recording.id),
+                        inSelectionMode = inSelectionMode,
                         onPlay = {
-                            val intent = Intent(Intent.ACTION_VIEW).apply {
-                                setDataAndType(recording.uri, "video/mp4")
-                                flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            if (inSelectionMode) {
+                                viewModel.toggleSelection(recording.id)
+                            } else {
+                                val intent = Intent(Intent.ACTION_VIEW).apply {
+                                    setDataAndType(recording.uri, "video/mp4")
+                                    flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                }
+                                try {
+                                    context.startActivity(Intent.createChooser(intent, "Play with"))
+                                } catch (_: Exception) {}
                             }
-                            try {
-                                context.startActivity(Intent.createChooser(intent, "Play with"))
-                            } catch (_: Exception) {}
+                        },
+                        onLongPress = {
+                            viewModel.toggleSelection(recording.id)
                         },
                         onShare = {
                             val shareIntent = Intent(Intent.ACTION_SEND).apply {
@@ -132,11 +173,15 @@ fun LibraryScreen(viewModel: LibraryViewModel) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun RecordingCard(
     recording: Recording,
     imageLoader: ImageLoader,
+    isSelected: Boolean,
+    inSelectionMode: Boolean,
     onPlay: () -> Unit,
+    onLongPress: () -> Unit,
     onShare: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -145,9 +190,15 @@ fun RecordingCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onPlay),
+            .combinedClickable(
+                onClick = onPlay,
+                onLongClick = onLongPress
+            ),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer 
+                             else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        )
     ) {
         Row(
             modifier = Modifier
@@ -169,12 +220,28 @@ fun RecordingCard(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
                 )
-                Icon(
-                    imageVector = Icons.Default.PlayCircleOutline,
-                    contentDescription = null,
-                    tint = Color.White.copy(alpha = 0.8f),
-                    modifier = Modifier.size(28.dp)
-                )
+                if (isSelected) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                } else if (!inSelectionMode) {
+                    Icon(
+                        imageVector = Icons.Default.PlayCircleOutline,
+                        contentDescription = null,
+                        tint = Color.White.copy(alpha = 0.8f),
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -211,14 +278,18 @@ fun RecordingCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
-            Box {
-                IconButton(onClick = { showMenu = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "Options")
+            if (!inSelectionMode) {
+                Box {
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "Options")
+                    }
+                    DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                        DropdownMenuItem(text = { Text("Share") }, onClick = { showMenu = false; onShare() })
+                        DropdownMenuItem(text = { Text("Delete") }, onClick = { showMenu = false; onDelete() })
+                    }
                 }
-                DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                    DropdownMenuItem(text = { Text("Share") }, onClick = { showMenu = false; onShare() })
-                    DropdownMenuItem(text = { Text("Delete") }, onClick = { showMenu = false; onDelete() })
-                }
+            } else {
+                Spacer(modifier = Modifier.width(48.dp)) // Reserve space for alignment
             }
         }
     }

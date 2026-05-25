@@ -24,6 +24,8 @@ class PreferencesRepository(private val context: Context) {
     private val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
     private val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
     private val PERFORMANCE_MODE = booleanPreferencesKey("performance_mode")
+    private val SAVE_LOCATION_URI = stringPreferencesKey("save_location_uri")
+    private val SHOW_TOUCHES = booleanPreferencesKey("show_touches")
 
     val userPreferencesFlow: Flow<UserPreferences> = context.dataStore.data.map { prefs ->
         UserPreferences(
@@ -37,7 +39,9 @@ class PreferencesRepository(private val context: Context) {
             theme = prefs[THEME] ?: "System",
             dynamicColor = prefs[DYNAMIC_COLOR] ?: false,
             onboardingComplete = prefs[ONBOARDING_COMPLETE] ?: false,
-            performanceMode = prefs[PERFORMANCE_MODE] ?: false
+            performanceMode = prefs[PERFORMANCE_MODE] ?: false,
+            saveLocationUri = prefs[SAVE_LOCATION_URI] ?: "",
+            showTouches = prefs[SHOW_TOUCHES] ?: false
         )
     }
 
@@ -73,5 +77,11 @@ class PreferencesRepository(private val context: Context) {
     }
     suspend fun updatePerformanceMode(value: Boolean) {
         context.dataStore.edit { it[PERFORMANCE_MODE] = value }
+    }
+    suspend fun updateSaveLocationUri(value: String) {
+        context.dataStore.edit { it[SAVE_LOCATION_URI] = value }
+    }
+    suspend fun updateShowTouches(value: Boolean) {
+        context.dataStore.edit { it[SHOW_TOUCHES] = value }
     }
 }

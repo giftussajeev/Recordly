@@ -1,6 +1,8 @@
 package com.recordly.app.ui.settings
 
 import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -13,8 +15,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+import androidx.documentfile.provider.DocumentFile
 import com.recordly.app.data.UserPreferences
 
 /**
@@ -42,6 +49,24 @@ fun SettingsScreen(
 
     var showSheet by remember { mutableStateOf<String?>(null) }
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
+
+    val documentTreeLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        if (uri != null) {
+            context.contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            )
+            viewModel.updateSaveLocationUri(uri.toString())
+        }
+    }
+
+    val writeSettingsLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        if (Settings.System.canWrite(context)) {
+            viewModel.updateShowTouches(!p.showTouches)
+            Settings.System.putInt(context.contentResolver, "show_touches", if (!p.showTouches) 1 else 0)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -113,18 +138,44 @@ fun SettingsScreen(
                 Icons.Default.PictureInPicture,
                 p.floatingControls
             ) { viewModel.updateFloatingControls(it) }
+            Divider()
+            SwitchRow(
+                "Show touches",
+                "Show visual feedback for taps",
+                Icons.Default.TouchApp,
+                p.showTouches
+            ) { checked ->
+                if (Settings.System.canWrite(context)) {
+                    viewModel.updateShowTouches(checked)
+                    Settings.System.putInt(context.contentResolver, "show_touches", if (checked) 1 else 0)
+                } else {
+                    val intent = Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS)
+                    intent.data = Uri.parse("package:${context.packageName}")
+                    writeSettingsLauncher.launch(intent)
+                }
+            }
         }
 
         // ── Storage ──
         SettingsSection(title = "Storage") {
-            InfoRow("Save location", "Movies/Recordly", Icons.Default.FolderOpen)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                "Custom save location coming in a future update.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
-            )
+            val locationName = if (p.saveLocationUri.isEmpty()) {
+                "Movies/Recordly"
+            } else {
+                try {
+                    val uri = Uri.parse(p.saveLocationUri)
+                    val docFile = DocumentFile.fromTreeUri(context, uri)
+                    docFile?.name ?: "Custom Folder"
+                } catch (e: Exception) {
+                    "Custom Folder"
+                }
+            }
+            ClickRow(
+                "Save location",
+                locationName,
+                Icons.Default.FolderOpen
+            ) {
+                documentTreeLauncher.launch(null)
+            }
         }
 
         // ── Performance ──

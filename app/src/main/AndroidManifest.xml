@@ -13,6 +13,9 @@
     <!-- Permissions for Notifications (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     
+    <!-- Permission for Show Touches -->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" tools:ignore="ProtectedPermissions" />
+    
     <!-- Permissions for Storage Access -->
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <!-- Legacy storage permissions for Android 8/9/10 -->

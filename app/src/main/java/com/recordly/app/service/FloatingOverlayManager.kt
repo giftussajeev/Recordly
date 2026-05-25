@@ -4,24 +4,42 @@ import android.content.Context
 import android.graphics.PixelFormat
 import android.os.Build
 import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.FrameLayout
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.setViewTreeLifecycleOwner
-import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.recordly.app.ui.theme.RecordlyTheme
+import kotlinx.coroutines.flow.MutableStateFlow
 
 class FloatingOverlayManager(private val context: Context) {
 
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private var overlayView: View? = null
     private var isOverlayShowing = false
+    private val isPausedFlow = MutableStateFlow(false)
 
-    fun showOverlay(isRecording: Boolean, onRecordToggle: () -> Unit, onMicToggle: () -> Unit) {
+    fun showOverlay(isPaused: Boolean, onPauseToggle: () -> Unit, onStop: () -> Unit) {
+        isPausedFlow.value = isPaused
         if (isOverlayShowing) return
 
         val layoutParams = WindowManager.LayoutParams(
@@ -34,8 +52,7 @@ class FloatingOverlayManager(private val context: Context) {
                 WindowManager.LayoutParams.TYPE_PHONE
             },
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or 
-            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-            WindowManager.LayoutParams.FLAG_SECURE, // Try to hide from recording if possible
+            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
             PixelFormat.TRANSLUCENT
         )
 
@@ -46,9 +63,13 @@ class FloatingOverlayManager(private val context: Context) {
         val container = FrameLayout(context)
         val composeView = ComposeView(context).apply {
             setContent {
+                val paused = isPausedFlow.collectAsState().value
                 RecordlyTheme(themePreference = "System", dynamicColor = false) {
-                    // TODO: Implement Compose Overlay UI here
-                    // RecordlyOverlayBubble(isRecording, onRecordToggle, onMicToggle)
+                    RecordlyOverlayBubble(
+                        isPaused = paused,
+                        onPauseToggle = onPauseToggle,
+                        onStop = onStop
+                    )
                 }
             }
         }
@@ -61,17 +82,15 @@ class FloatingOverlayManager(private val context: Context) {
         
         container.setViewTreeLifecycleOwner(lifecycleOwner)
         container.setViewTreeSavedStateRegistryOwner(lifecycleOwner)
-        // Note: For ViewModelStoreOwner you might need a ViewTreeViewModelStoreOwner if you use ViewModels in overlay.
         
         container.addView(composeView)
 
-        // Implement simple drag handle logic
         var initialX = 0
         var initialY = 0
         var initialTouchX = 0f
         var initialTouchY = 0f
 
-        container.setOnTouchListener { view, event ->
+        container.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     initialX = layoutParams.x
@@ -111,3 +130,46 @@ class FloatingOverlayManager(private val context: Context) {
         }
     }
 }
+
+@Composable
+fun RecordlyOverlayBubble(isPaused: Boolean, onPauseToggle: () -> Unit, onStop: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .shadow(8.dp, CircleShape)
+            .background(MaterialTheme.colorScheme.surface, CircleShape)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        IconButton(
+            onClick = onPauseToggle,
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primaryContainer)
+        ) {
+            Icon(
+                if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
+                contentDescription = if (isPaused) "Resume" else "Pause",
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+
+        IconButton(
+            onClick = onStop,
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.errorContainer)
+        ) {
+            Icon(
+                Icons.Default.Stop,
+                contentDescription = "Stop",
+                tint = MaterialTheme.colorScheme.onErrorContainer,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+

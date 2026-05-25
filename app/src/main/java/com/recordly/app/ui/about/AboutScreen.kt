@@ -77,7 +77,7 @@ fun AboutScreen(
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            "Version 1.5",
+            "Version 1.7",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.SemiBold
@@ -110,7 +110,7 @@ fun AboutScreen(
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 InfoRow("App", "Recordly")
-                InfoRow("Version", "1.5")
+                InfoRow("Version", "1.7")
                 InfoRow("Package", "com.recordly.app")
                 InfoRow("Min Android", "Android 8.0 (API 26)+")
                 InfoRow("License", "Apache License 2.0")

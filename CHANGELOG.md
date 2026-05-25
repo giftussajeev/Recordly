@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.7 (versionCode 8)
+### Library & Settings
+- Implemented real multi-select and batch actions (Share/Delete) in the Library screen.
+- Implemented "Show touches" functionality via standard Android WRITE_SETTINGS permission.
+- Settings Screen UI polished for performance.
+- Storage Access Framework custom directory saving.
+- Floating overlay fixed.
+
+
 ## 1.5 (versionCode 6)
 ### Home screen redesign
 - Replaced small chip row with a 2×2 preset grid: four large rounded cards (Resolution, FPS, Quality, Audio)

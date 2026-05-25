@@ -16,7 +16,7 @@ class ViewModelFactory(private val appContainer: AppContainer) : ViewModelProvid
         }
         if (modelClass.isAssignableFrom(LibraryViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return LibraryViewModel(appContainer.mediaRepository) as T
+            return LibraryViewModel(appContainer.mediaRepository, appContainer.preferencesRepository) as T
         }
         if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")

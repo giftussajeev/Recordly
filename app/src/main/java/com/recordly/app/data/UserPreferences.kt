@@ -11,5 +11,7 @@ data class UserPreferences(
     val theme: String = "System",
     val dynamicColor: Boolean = false,   // off by default — use stable Recordly palette
     val onboardingComplete: Boolean = false,
-    val performanceMode: Boolean = false
+    val performanceMode: Boolean = false,
+    val saveLocationUri: String = "",
+    val showTouches: Boolean = false
 )

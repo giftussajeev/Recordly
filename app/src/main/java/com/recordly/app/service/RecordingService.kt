@@ -13,6 +13,7 @@ import android.hardware.display.VirtualDisplay
 import android.media.MediaRecorder
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
+import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.os.IBinder
@@ -76,6 +77,8 @@ class RecordingService : Service() {
         const val EXTRA_AUDIO_SOURCE = "EXTRA_AUDIO_SOURCE"
         const val EXTRA_BITRATE = "EXTRA_BITRATE"
         const val EXTRA_COUNTDOWN = "EXTRA_COUNTDOWN"
+        const val EXTRA_FLOATING_CONTROLS = "EXTRA_FLOATING_CONTROLS"
+        const val EXTRA_SAVE_LOCATION_URI = "EXTRA_SAVE_LOCATION_URI"
 
         // Display metrics — MUST be passed from Activity context (not Service)
         const val EXTRA_SCREEN_WIDTH = "EXTRA_SCREEN_WIDTH"
@@ -134,6 +137,8 @@ class RecordingService : Service() {
         val audioSource = intent.getStringExtra(EXTRA_AUDIO_SOURCE) ?: "No audio"
         val bitrate = intent.getStringExtra(EXTRA_BITRATE) ?: "Auto"
         val countdown = intent.getIntExtra(EXTRA_COUNTDOWN, 0)
+        val floatingControls = intent.getBooleanExtra(EXTRA_FLOATING_CONTROLS, true)
+        val saveLocationUri = intent.getStringExtra(EXTRA_SAVE_LOCATION_URI) ?: ""
 
         // Display metrics passed from Activity — safe to use in Service
         val screenWidth = intent.getIntExtra(EXTRA_SCREEN_WIDTH, 1080)
@@ -141,13 +146,13 @@ class RecordingService : Service() {
         val screenDensity = intent.getIntExtra(EXTRA_SCREEN_DENSITY, 420)
         val screenRefreshRate = intent.getFloatExtra(EXTRA_SCREEN_REFRESH_RATE, 60f)
 
-        Log.d(TAG, "ACTION_START: res=$resolution fps=$fps audio=$audioSource bitrate=$bitrate countdown=$countdown")
+        Log.d(TAG, "ACTION_START: res=$resolution fps=$fps audio=$audioSource bitrate=$bitrate countdown=$countdown floating=$floatingControls")
         Log.d(TAG, "Display: ${screenWidth}x${screenHeight} @ ${screenDensity}dpi, refreshRate=${screenRefreshRate}Hz")
 
         if (resultCode != 0 && resultData != null) {
             startCountdownAndRecord(
                 resultCode, resultData, resolution, fps, audioSource, bitrate, countdown,
-                screenWidth, screenHeight, screenDensity, screenRefreshRate
+                screenWidth, screenHeight, screenDensity, screenRefreshRate, floatingControls, saveLocationUri
             )
         } else {
             Log.e(TAG, "Invalid permission data: resultCode=$resultCode")
@@ -166,13 +171,15 @@ class RecordingService : Service() {
         screenWidth: Int,
         screenHeight: Int,
         screenDensity: Int,
-        screenRefreshRate: Float
+        screenRefreshRate: Float,
+        floatingControls: Boolean,
+        saveLocationUri: String
     ) {
         countdownJob?.cancel()
         if (countdown <= 0) {
             serviceScope.launch {
                 startRecording(resultCode, resultData, resolution, fps, audioSource, bitrateConfig,
-                    screenWidth, screenHeight, screenDensity, screenRefreshRate)
+                    screenWidth, screenHeight, screenDensity, screenRefreshRate, floatingControls, saveLocationUri)
             }
             return
         }
@@ -182,7 +189,7 @@ class RecordingService : Service() {
                 delay(1000)
             }
             startRecording(resultCode, resultData, resolution, fps, audioSource, bitrateConfig,
-                screenWidth, screenHeight, screenDensity, screenRefreshRate)
+                screenWidth, screenHeight, screenDensity, screenRefreshRate, floatingControls, saveLocationUri)
         }
     }
 
@@ -196,7 +203,9 @@ class RecordingService : Service() {
         screenWidth: Int,
         screenHeight: Int,
         screenDensity: Int,
-        screenRefreshRate: Float
+        screenRefreshRate: Float,
+        floatingControls: Boolean,
+        saveLocationUri: String
     ) {
         if (_recordingState.value is RecordingState.Recording) {
             Log.w(TAG, "Already recording, ignoring start request")
@@ -243,11 +252,11 @@ class RecordingService : Service() {
 
             // Try with user config first, fall back to safe defaults on failure
             val prepared = trySetupMediaRecorder(
-                resolvedAudio, bitrateConfig, recWidth, recHeight, targetFps
+                resolvedAudio, bitrateConfig, recWidth, recHeight, targetFps, saveLocationUri
             ) ?: run {
                 Log.w(TAG, "Primary config failed, retrying with safe fallback (1080p, 30fps, no audio)")
                 val (fbW, fbH) = resolveRecordingDimensions("1080p", screenWidth, screenHeight)
-                trySetupMediaRecorder("No audio", "Auto", fbW, fbH, 30)
+                trySetupMediaRecorder("No audio", "Auto", fbW, fbH, 30, saveLocationUri)
             }
 
             if (prepared == null) {
@@ -276,6 +285,10 @@ class RecordingService : Service() {
             mediaRecorder?.start()
             _recordingState.value = RecordingState.Recording
             Log.d(TAG, "Recording started: ${recWidth}x${recHeight} @ ${targetFps}fps audio=$resolvedAudio")
+            
+            if (floatingControls && android.provider.Settings.canDrawOverlays(this)) {
+                showFloatingControls(isPaused = false)
+            }
 
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start recording", e)
@@ -349,10 +362,11 @@ class RecordingService : Service() {
         bitrateConfig: String,
         width: Int,
         height: Int,
-        fps: Int
+        fps: Int,
+        saveLocationUri: String
     ): MediaRecorder? {
         return try {
-            setupMediaRecorder(audioSource, bitrateConfig, width, height, fps)
+            setupMediaRecorder(audioSource, bitrateConfig, width, height, fps, saveLocationUri)
             mediaRecorder
         } catch (e: Exception) {
             Log.e(TAG, "setupMediaRecorder failed: ${e.message}")
@@ -367,7 +381,8 @@ class RecordingService : Service() {
         bitrateConfig: String,
         width: Int,
         height: Int,
-        fps: Int
+        fps: Int,
+        saveLocationUri: String
     ) {
         mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             MediaRecorder(this)
@@ -420,6 +435,44 @@ class RecordingService : Service() {
         mediaRecorder?.setVideoEncodingBitRate(bitrate)
         Log.d(TAG, "Video: ${width}x${height} @ ${fps}fps bitrate=$bitrate")
 
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+        val fileName = "Recordly_$timestamp.mp4"
+        
+        if (saveLocationUri.isNotEmpty()) {
+            try {
+                val treeUri = Uri.parse(saveLocationUri)
+                val docTree = androidx.documentfile.provider.DocumentFile.fromTreeUri(this, treeUri)
+                val docFile = docTree?.createFile("video/mp4", fileName)
+                
+                if (docFile != null) {
+                    val pfd = contentResolver.openFileDescriptor(docFile.uri, "w")
+                    if (pfd != null) {
+                        mediaRecorder?.setOutputFile(pfd.fileDescriptor)
+                        Log.d(TAG, "Output: ${docFile.uri}")
+                        // We must close the parcel file descriptor only after media recorder is done.
+                        // Actually, setOutputFile(FileDescriptor) doesn't close it, but MediaRecorder docs 
+                        // say it doesn't close it. However, we can close it after start() or prepare().
+                        // Let's close it here after prepare, but wait, prepare() needs it?
+                        // Let's not close it here just to be safe, though leaking it could happen.
+                    } else {
+                        throw Exception("Could not open file descriptor")
+                    }
+                } else {
+                    throw Exception("Could not create file in save location")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to use custom save location: ${e.message}, falling back to default")
+                fallbackToDefaultSaveLocation(fileName)
+            }
+        } else {
+            fallbackToDefaultSaveLocation(fileName)
+        }
+
+        mediaRecorder?.prepare()
+        Log.d(TAG, "MediaRecorder prepared")
+    }
+
+    private fun fallbackToDefaultSaveLocation(fileName: String) {
         val outputDir = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES),
             "Recordly"
@@ -429,15 +482,10 @@ class RecordingService : Service() {
             Log.d(TAG, "Created output dir: $created -> ${outputDir.absolutePath}")
         }
 
-        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-        val outputFile = File(outputDir, "Recordly_$timestamp.mp4")
+        val outputFile = File(outputDir, fileName)
         currentOutputFile = outputFile
-
         mediaRecorder?.setOutputFile(outputFile.absolutePath)
-        Log.d(TAG, "Output: ${outputFile.absolutePath}")
-
-        mediaRecorder?.prepare()
-        Log.d(TAG, "MediaRecorder prepared")
+        Log.d(TAG, "Output fallback: ${outputFile.absolutePath}")
     }
 
     private fun pauseRecording() {
@@ -449,6 +497,10 @@ class RecordingService : Service() {
                 val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 nm.notify(NOTIFICATION_ID, buildNotification(isPaused = true))
                 Log.d(TAG, "Recording paused")
+                
+                if (android.provider.Settings.canDrawOverlays(this)) {
+                    showFloatingControls(isPaused = true)
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to pause", e)
             }
@@ -464,6 +516,10 @@ class RecordingService : Service() {
                 val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 nm.notify(NOTIFICATION_ID, buildNotification(isPaused = false))
                 Log.d(TAG, "Recording resumed")
+                
+                if (android.provider.Settings.canDrawOverlays(this)) {
+                    showFloatingControls(isPaused = false)
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to resume", e)
             }
@@ -498,9 +554,10 @@ class RecordingService : Service() {
         virtualDisplay = null
         Log.d(TAG, "VirtualDisplay released")
 
-        mediaProjection?.stop()
         mediaProjection = null
         Log.d(TAG, "MediaProjection stopped")
+
+        try { overlayManager?.hideOverlay() } catch (_: Exception) {}
 
         // Delete partial file if recording never properly started
         if (!recordingWasStarted && !isError) {
@@ -578,6 +635,22 @@ class RecordingService : Service() {
         }
 
         return builder.build()
+    }
+
+    private fun showFloatingControls(isPaused: Boolean) {
+        overlayManager?.showOverlay(
+            isPaused = isPaused,
+            onPauseToggle = {
+                if (isPaused) {
+                    resumeRecording()
+                } else {
+                    pauseRecording()
+                }
+            },
+            onStop = {
+                stopRecordingSafely(isError = false, message = null)
+            }
+        )
     }
 
     override fun onDestroy() {

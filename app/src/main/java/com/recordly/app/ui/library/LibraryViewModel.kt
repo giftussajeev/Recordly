@@ -10,8 +10,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
+import com.recordly.app.data.PreferencesRepository
 
-class LibraryViewModel(private val repository: MediaRepository) : ViewModel() {
+class LibraryViewModel(
+    private val repository: MediaRepository,
+    private val preferencesRepository: PreferencesRepository
+) : ViewModel() {
     private val _allRecordings = MutableStateFlow<List<Recording>>(emptyList())
     private val _searchQuery = MutableStateFlow("")
 
@@ -19,6 +24,9 @@ class LibraryViewModel(private val repository: MediaRepository) : ViewModel() {
     val recordings: StateFlow<List<Recording>> = _recordings.asStateFlow()
 
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    private val _selectedRecordingIds = MutableStateFlow<Set<Long>>(emptySet())
+    val selectedRecordingIds: StateFlow<Set<Long>> = _selectedRecordingIds.asStateFlow()
 
     init {
         // Combine recordings with search query for filtering
@@ -34,7 +42,8 @@ class LibraryViewModel(private val repository: MediaRepository) : ViewModel() {
 
     fun refresh() {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.getRecordings().collect { list ->
+            val prefs = preferencesRepository.userPreferencesFlow.first()
+            repository.getRecordings(prefs.saveLocationUri).collect { list ->
                 _allRecordings.value = list
             }
         }
@@ -52,6 +61,30 @@ class LibraryViewModel(private val repository: MediaRepository) : ViewModel() {
             } catch (_: Exception) {
                 // Scoped storage may deny deletion
             }
+        }
+    }
+
+    fun toggleSelection(id: Long) {
+        _selectedRecordingIds.value = _selectedRecordingIds.value.toMutableSet().apply {
+            if (contains(id)) remove(id) else add(id)
+        }
+    }
+
+    fun clearSelection() {
+        _selectedRecordingIds.value = emptySet()
+    }
+
+    fun deleteSelected() {
+        val selected = _selectedRecordingIds.value
+        val itemsToDelete = _allRecordings.value.filter { it.id in selected }
+        viewModelScope.launch(Dispatchers.IO) {
+            itemsToDelete.forEach {
+                try {
+                    repository.deleteRecording(it.uri)
+                } catch (_: Exception) {}
+            }
+            _selectedRecordingIds.value = emptySet()
+            refresh()
         }
     }
 }

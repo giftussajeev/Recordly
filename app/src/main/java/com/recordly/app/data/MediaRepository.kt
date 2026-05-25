@@ -4,6 +4,7 @@ import android.content.ContentUris
 import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
+import android.media.MediaMetadataRetriever
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -20,8 +21,50 @@ data class Recording(
 )
 
 class MediaRepository(private val context: Context) {
-    fun getRecordings(): Flow<List<Recording>> = flow {
+    fun getRecordings(saveLocationUri: String): Flow<List<Recording>> = flow {
         val recordings = mutableListOf<Recording>()
+        
+        if (saveLocationUri.isNotEmpty()) {
+            try {
+                val treeUri = Uri.parse(saveLocationUri)
+                val docTree = androidx.documentfile.provider.DocumentFile.fromTreeUri(context, treeUri)
+                if (docTree != null && docTree.isDirectory) {
+                    docTree.listFiles().forEach { docFile: androidx.documentfile.provider.DocumentFile ->
+                        if (docFile.isFile && docFile.name?.endsWith(".mp4") == true) {
+                            val retriever = MediaMetadataRetriever()
+                            try {
+                                retriever.setDataSource(context, docFile.uri)
+                                val dur = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
+                                val width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH) ?: ""
+                                val height = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT) ?: ""
+                                val res = if (width.isNotEmpty() && height.isNotEmpty()) "${width}x${height}" else "Unknown"
+                                recordings.add(
+                                    Recording(
+                                        id = docFile.uri.hashCode().toLong(),
+                                        uri = docFile.uri,
+                                        name = docFile.name ?: "Unknown",
+                                        durationMs = dur,
+                                        sizeBytes = docFile.length(),
+                                        dateAdded = docFile.lastModified(),
+                                        resolution = res
+                                    )
+                                )
+                            } catch (e: Exception) {
+                                // ignore
+                            } finally {
+                                retriever.release()
+                            }
+                        }
+                    }
+                    recordings.sortByDescending { it.dateAdded }
+                    emit(recordings)
+                    return@flow
+                }
+            } catch (e: Exception) {
+                // fallback to default
+            }
+        }
+
         val collection = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
         val projection = arrayOf(
             MediaStore.Video.Media._ID,
@@ -71,6 +114,15 @@ class MediaRepository(private val context: Context) {
     }.flowOn(Dispatchers.IO)
     
     fun deleteRecording(uri: Uri) {
-        context.contentResolver.delete(uri, null, null)
+        try {
+            if (uri.scheme == "content" && uri.authority != MediaStore.AUTHORITY) {
+                // Likely a DocumentFile URI
+                androidx.documentfile.provider.DocumentFile.fromSingleUri(context, uri)?.delete()
+            } else {
+                context.contentResolver.delete(uri, null, null)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }

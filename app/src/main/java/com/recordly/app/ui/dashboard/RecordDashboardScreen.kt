@@ -95,6 +95,8 @@ fun RecordDashboardScreen(viewModel: RecordViewModel) {
                 putExtra(RecordingService.EXTRA_SCREEN_HEIGHT, displayMetrics.heightPixels)
                 putExtra(RecordingService.EXTRA_SCREEN_DENSITY, displayMetrics.densityDpi)
                 putExtra(RecordingService.EXTRA_SCREEN_REFRESH_RATE, refreshRate)
+                putExtra(RecordingService.EXTRA_FLOATING_CONTROLS, prefs?.floatingControls ?: true)
+                putExtra(RecordingService.EXTRA_SAVE_LOCATION_URI, prefs?.saveLocationUri ?: "")
             }
             ContextCompat.startForegroundService(context, intent)
         } else {
